@@ -5,7 +5,10 @@ runOnMC = True
 
 process.source.fileNames = [
 # "root://eoscms//eos/cms/store/mc/Summer12/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/TestGED_START53_V6-v1/0000/CC17C457-89AC-E111-A4EC-002481E15070.root"
-	"file:///home/gflouris/Desktop/00EC581B-200F-E211-8C72-00261894393B.root"
+#"root://xrootd.unl.edu//store/mc/Summer12_DR53X/QCD_HT-100To250_TuneZ2star_8TeV-madgraph-pythia/AODSIM/PU_S10_START53_V7A-v1/00000/00EC581B-200F-E211-8C72-00261894393B.root
+#	"file:///home/gflouris/Desktop/00EC581B-200F-E211-8C72-00261894393B.root"
+       "file:///afs/cern.ch/work/g/gflouris/public/AOD_MC_00EC581B-200F-E211-8C72-00261894393B.root"
+
  ]
 
 if runOnMC:
