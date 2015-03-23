@@ -1,0 +1,10 @@
+<lcgdict>
+<selection>
+  <class name="QCDMET"/>
+  <class name="QCDJet"/>
+  <class name="QCDCaloJet"/>
+  <class name="QCDPFJet"/>
+  <class name="QCDEventHdr"/>
+  <class name="QCDEvent"/>
+</selection>
+</lcgdict>
