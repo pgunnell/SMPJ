@@ -1,3 +1,6 @@
+//Author K. Kousouris
+//Modified by: S. Ganguly
+
 #ifndef QCDMET_h
 #define QCDMET_h
 

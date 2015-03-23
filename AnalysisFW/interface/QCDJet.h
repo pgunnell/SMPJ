@@ -1,3 +1,6 @@
+//Author K. Kousouris
+//Modified by: S. Ganguly
+
 #ifndef QCDJet_h
 #define QCDJet_h
 #include "DataFormats/JetReco/interface/Jet.h"

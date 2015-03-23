@@ -1,3 +1,5 @@
+//Author K. Kousouris
+//Modified by: S. Ganguly
 #ifndef QCDEventHdr_h
 #define QCDEventHdr_h
 

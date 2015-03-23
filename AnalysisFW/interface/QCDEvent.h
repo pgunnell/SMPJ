@@ -1,3 +1,6 @@
+//Author K. Kousouris
+//Modified by: S. Ganguly
+
 #ifndef QCDEvent_h
 #define QCDEvent_h
 #include "SMPJ/AnalysisFW/interface/QCDJet.h"

@@ -1,3 +1,6 @@
+//Author K. Kousouris
+//Modified by: S. Ganguly
+
 #ifndef QCDCaloJet_h
 #define QCDCaloJet_h
 #include "SMPJ/AnalysisFW/interface/QCDJet.h"

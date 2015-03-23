@@ -1,3 +1,6 @@
+//Author K. Kousouris
+//Modified by: S. Ganguly
+
 #ifndef QCDPFJet_h
 #define QCDPFJet_h
 #include "SMPJ/AnalysisFW/interface/QCDJet.h"
