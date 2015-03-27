@@ -41,9 +41,6 @@ process.load('CommonTools.UtilAlgos.TFileService_cfi')
 process.TFileService.fileName=cms.string('MC_ProcessedTreeProducer.root')
 
 
-#validator_sequence = cms.Sequence()
-#setattr(process,"validator_sequence",validator_sequence)
-
 process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	## jet collections ###########################
 	pfjets          = cms.InputTag('selectedPatJetsAK4PFCHS'),
@@ -63,8 +60,8 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	goodVtxNdof     = cms.double(4), 
 	goodVtxZ        = cms.double(24),
 	## rho #######################################
-	srcCaloRho      = cms.InputTag('ak4CaloJets','rho'),
-	srcPFRho        = cms.InputTag('ak4CaloJets','rho'),
+	srcCaloRho      = cms.InputTag('fixedGridRhoFastjetAll'),
+	srcPFRho        = cms.InputTag('fixedGridRhoFastjetAllCalo'),
 	srcPU           = cms.untracked.InputTag('addPileupInfo'),
 	## preselection cuts #########################
 	maxY            = cms.double(5.0), 
@@ -126,7 +123,3 @@ process.output = cms.OutputModule("PoolOutputModule",
 )
 # schedule definition                                                                                                       
 process.outpath  = cms.EndPath(process.out) 
-
-#!
-#! THAT'S ALL! CAN YOU BELIEVE IT? :-D
-#!

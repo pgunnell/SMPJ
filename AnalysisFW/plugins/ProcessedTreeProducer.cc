@@ -633,18 +633,18 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
   //---------------- met ---------------------------------------------
   Handle<PFMETCollection> pfmet;
   Handle<CaloMETCollection> calomet;
-  //event.getByLabel("pfMet",pfmet);
+  event.getByLabel("pfMet",pfmet);
   event.getByLabel(mPFMET,pfmet);
-  event.getByLabel("met",calomet);
+  event.getByLabel("caloMet",calomet);
   mPFMet.setVar((*pfmet)[0].et(),(*pfmet)[0].sumEt(),(*pfmet)[0].phi());
   mCaloMet.setVar((*calomet)[0].et(),(*calomet)[0].sumEt(),(*calomet)[0].phi());
   //-------------- fill the tree -------------------------------------  
   sort(mPFJets.begin(),mPFJets.end(),sort_pfjets);
   mEvent->setEvtHdr(mEvtHdr);
-//  mEvent->setPFJets(mPFJets);
+  mEvent->setPFJets(mPFJets);
   mEvent->setPFJetsCHS(mPFJetsCHS); // -- later substitute chs jets 
   mEvent->setGenJets(mGenJets);
-//  mEvent->setCaloMET(mCaloMet);
+  mEvent->setCaloMET(mCaloMet);
   mEvent->setPFMET(mPFMet);
   mEvent->setL1Obj(mL1Objects);
   mEvent->setHLTObj(mHLTObjects);
