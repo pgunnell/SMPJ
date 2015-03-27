@@ -20,8 +20,8 @@ process.GlobalTag.globaltag = "PHYS14_25_V2::All"
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
                                     
 inFiles = cms.untracked.vstring(
-'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' 
-
+#'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' 
+'file:///afs/cern.ch/work/g/gflouris/public/SMPJ_AnalysisFW/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' 
    )
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(20))
 process.source = cms.Source("PoolSource", fileNames = inFiles )
