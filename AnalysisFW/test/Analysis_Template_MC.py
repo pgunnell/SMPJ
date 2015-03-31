@@ -13,7 +13,7 @@ process.source = cms.Source("EmptySource")
 
 ##-------------------- User analyzer  --------------------------------
 process.efficiency  = cms.EDAnalyzer('Analysis_Template_MC',
-filename        = cms.string("file://./ProcessedTree_mc.root"),
+filename        = cms.string("file://./MC_ProcessedTreeProducer.root"),
 
 treename        = cms.string('ProcessedTree'),
 dirname         = cms.string('ak7'),
