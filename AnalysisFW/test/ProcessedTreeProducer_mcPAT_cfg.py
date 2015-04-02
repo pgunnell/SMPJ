@@ -13,45 +13,24 @@ from PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff import *
 from PhysicsTools.PatAlgos.selectionLayer1.jetSelector_cfi import selectedPatJets
 from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection
 
-##jetToolBox from https://github.com/cms-jet/jetToolbox 
+## Modified version of jetToolBox from https://github.com/cms-jet/jetToolbox 
 ## Options for PUMethod: Puppi, CS, SK, CHS
 def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 	JETCorrPayload='None'
 	JETCorrLevels = [ 'None' ]
-	supportedJetAlgos = { 'ak': 'AntiKt', 'ca' : 'CambridgeAachen', 'kt' : 'Kt' }
-	recommendedJetAlgos = [ 'ak4', 'ak8', 'ca4', 'ca8', 'ca10' ]
-	payloadList = [ 'AK1PFchs', 'AK2PFchs', 'AK3PFchs', 'AK4PFchs', 'AK5PFchs', 'AK6PFchs', 'AK7PFchs', 'AK8PFchs', 'AK9PFchs', 'AK10PFchs' ]
-	JECLevels = [ 'L1Offset', 'L1FastJet', 'L1JPTOffset', 'L2Relative', 'L3Absolute', 'L5Falvour', 'L7Parton' ]
-	jetAlgo = ''
-	algorithm = ''
-	size = ''
-	for type, tmpAlgo in supportedJetAlgos.iteritems(): 
-		if type in jetType.lower():
-			jetAlgo = type
-			algorithm = tmpAlgo
-			size = jetType.replace( type, '' )
+	#JECLevels = [ 'L1Offset', 'L1FastJet', 'L1JPTOffset', 'L2Relative', 'L3Absolute', 'L5Falvour', 'L7Parton' ]
 
-	jetSize = 0.
-	if int(size) in range(0, 20): jetSize = int(size)/10.
-	else: print '|---- jetToolBox: jetSize has not a valid value. Insert a number between 1 and 20 after algorithm, like: AK8'
-	### Trick for uppercase/lowercase algo name
-	jetALGO = jetAlgo.upper()+size
-	jetalgo = jetAlgo.lower()+size
-	if jetalgo not in recommendedJetAlgos: print '|---- jetToolBox: CMS recommends the following jet algoritms: '+' '.join(recommendedJetAlgos)+'. You are using', jetalgo,'.'
+	algorithm='AntiKt' # CambridgeAachen' , 'Kt'
+	size = jetType[-1:] #[-1:] takes the last char from string 'akX'
+	jetSize = float('0.'+jetType[-1:]) 
+	jetALGO = jetType.upper()
+	jetalgo = jetType.lower()
+      
+	print 'Running processes with: '+str(jetALGO)+' PF '+PUMethod+' jet algorithm with radius parameter '+str(jetSize)
 
-	if JETCorrPayload not in payloadList:
-		if( int(size) > 10 ): 
-			size = '10' 
-			print '|---- jetToolbox: For jets bigger than 1.0, the jet corrections are AK10PFchs.'
-		if not 'None' in JETCorrPayload: print '|---- jetToolBox: Payload given for Jet corrections ('+JETCorrPayload+') is not correct. Using a default AK'+size+'PFchs instead.'
-		JETCorrPayload = 'AK'+size+'PFchs'
-	else: print '|---- jetToolBox: Using '+JETCorrPayload+' payload for jet corrections.'
-
-	if not set(JETCorrLevels).issubset(set(JECLevels)) :
-		if not 'None' in JETCorrLevels: print '|---- jetToolbox: JEC levels given ( '+' '.join(JETCorrLevels)+' ) are incorrect. Using the default levels: L1FastJet, L2Relative, L3Absolute.'
-		JETCorrLevels = ['L1FastJet', 'L2Relative', 'L3Absolute']
-	
-	print '|---- jetToolBox: Applying these jet corrections: ( '+JETCorrPayload+', '+' '.join(JETCorrLevels)+' )'
+	JETCorrPayload = 'AK'+size+'PFchs'
+	#JETCorrLevels = ['L1FastJet', 'L2Relative', 'L3Absolute']
+	JETCorrLevels = [] #No JEC corrections
 	JEC = ( JETCorrPayload, JETCorrLevels , 'None')
 
 
@@ -60,8 +39,6 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 	#################################################################################
 
 	jetSeq = cms.Sequence()
-
-	print '|---- jetToolBox: JETTOOLBOX RUNNING ON AOD FOR '+jetALGO+' JETS USING '+PUMethod
 
 	genParticlesLabel = 'genParticles'
 	pvLabel = 'offlinePrimaryVertices'
@@ -101,7 +78,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 			jetSource = cms.InputTag( jetalgo+'PFJets'+PUMethod),
 			algo = jetalgo,
 			rParam = jetSize,
-			jetCorrections = JEC, #( 'AK'+size+'PFchs', cms.vstring( ['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
+			jetCorrections =  JEC, #( 'AK'+size+'PFchs', cms.vstring( ['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
 			pfCandidates = cms.InputTag( 'particleFlow' ),  #'packedPFCandidates'),
 			svSource = cms.InputTag( svLabel ),   #'slimmedSecondaryVertices'),
 			genJetCollection = cms.InputTag( jetalgo+'GenJetsNoNu'),
@@ -110,7 +87,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 
 	getattr( proc, 'patJetCorrFactors'+jetALGO+'PF'+PUMethod ).primaryVertices = pvLabel  #'offlineSlimmedPrimaryVertices' 
 	getattr(proc,'patJetPartons').particles = cms.InputTag( genParticlesLabel ) #'prunedGenParticles')
-	setattr( proc, 'selectedPatJets'+jetALGO+'PF'+PUMethod, selectedPatJets.clone( src = 'patJets'+jetALGO+'PF'+PUMethod ) )
+	setattr(proc, 'selectedPatJets'+jetALGO+'PF'+PUMethod, selectedPatJets.clone( src = 'patJets'+jetALGO+'PF'+PUMethod ) )
 	setattr(proc, jetSequence, jetSeq)
 
 
@@ -138,8 +115,8 @@ process.GlobalTag.globaltag = "PHYS14_25_V2::All"
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
                                     
 inFiles = cms.untracked.vstring(
-#'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' 
-'file:///afs/cern.ch/work/g/gflouris/public/SMPJ_AnalysisFW/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' 
+'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' 
+#'file:///afs/cern.ch/work/g/gflouris/public/SMPJ_AnalysisFW/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' 
    )
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(20))
 process.source = cms.Source("PoolSource", fileNames = inFiles )
@@ -153,7 +130,7 @@ jetToolbox( process, 'ak4', 'ak7JetSubs')
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.load('CommonTools.UtilAlgos.TFileService_cfi')
-process.TFileService.fileName=cms.string('MC_ProcessedTreeProducer.root')
+process.TFileService.fileName=cms.string('MC_ProcessedTreeProducer_2.root')
 
 
 process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
@@ -199,6 +176,18 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	#calojecService  = cms.string('ak7CaloL1FastL2L3Residual')
 )
 
+
+jetToolbox( process, 'ak8', 'ak5JetSubs','CHS') 
+jetToolbox( process, 'ak8', 'ak7JetSubs') 
+
+process.ak8 = process.ak4.clone(
+	pfjets          = cms.InputTag('selectedPatJetsAK8PF'),
+	pfjetschs       = cms.InputTag('selectedPatJetsAK8PFCHS'),
+	## MET collection ####
+	pfmet           = cms.InputTag('pfMet'),
+	genjets         = cms.untracked.InputTag('ak8GenJets'),
+)
+
 jetToolbox( process, 'ak7', 'ak5JetSubs','CHS') 
 jetToolbox( process, 'ak7', 'ak7JetSubs') 
 
@@ -228,7 +217,7 @@ process.ak5 = process.ak4.clone(
 )
 
 
-process.p = cms.Path( process.ak4*process.ak5*process.ak7 )
+process.p = cms.Path( process.ak4*process.ak5*process.ak7*process.ak8 )
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
