@@ -13,6 +13,7 @@
 #include "TFile.h"
 
 #include "SMPJ/AnalysisFW/plugins/Analysis_Template_MC.h"
+
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -26,14 +27,17 @@ Analysis_Template_MC::Analysis_Template_MC(edm::ParameterSet const& cfg)
      mTreeName       = cfg.getParameter<std::string>               ("treename");
      mDirName        = cfg.getParameter<std::string>               ("dirname");
 
+     mGlobalTag        = cfg.getParameter<std::string>               ("pseudoglobaltag");
+     mjettype        = cfg.getParameter<std::string>               ("jettype");
+
      mMinPt     = cfg.getParameter<double> ("minPt");
      mYMax      = cfg.getParameter<double> ("ymax");
      mJetID     = cfg.getParameter<int>  ("JetID");
 
      mprintOk   = cfg.getParameter<int>  ("printOk");
 
- //    mIsMCarlo       = cfg.getUntrackedParameter<bool>             ("isMCarlo");
- //    mJECUncSrcNames = cfg.getParameter<std::vector<std::string> > ("jecUncSrcNames");
+     mIsMCarlo       = cfg.getUntrackedParameter<bool>             ("isMCarlo");
+     mJECUncSrcNames = cfg.getParameter<std::vector<std::string> > ("jecUncSrcNames");
 }
 
 //------------------------------ Declaration Of The Function beginjob() ------------------------//
@@ -47,13 +51,16 @@ void Analysis_Template_MC::beginJob()
      TBranch *branch = mTree->GetBranch("events");
      branch->SetAddress(&Event);
 
+     //------------------ Init jec constructor --------------------------- //
+     jecs = new JECs(mIsMCarlo, mGlobalTag, mjettype);
+
      //------------------ Histogram Booking --------------------------- //
      num_of_Vtx     = fs->make<TH1F>("num_of_Vtx","num_of_Vtx",100,0.,100.);
      num_of_VtxGood = fs->make<TH1F>("num_of_VtxGood","num_of_VtxGood",100,0.,100.);
-     
-    mc_pthat = fs->make<TH1F>("mc_pthat","mc_pthat",200,0.,2000.);
-    mc_pthat_weighted = fs->make<TH1F>("mc_pthat_weighted","mc_pthat_weighted",200,0.,2000.);
-    mc_pthat_weighted->Sumw2();
+
+     mc_pthat = fs->make<TH1F>("mc_pthat","mc_pthat",200,0.,2000.);
+     mc_pthat_weighted = fs->make<TH1F>("mc_pthat_weighted","mc_pthat_weighted",200,0.,2000.);
+     mc_pthat_weighted->Sumw2();
 
 
      pt0_GENJet  = fs->make<TH1F>("pt0_GENJet","pt0_GENJet",200,0.,2000.); pt0_GENJet->Sumw2();
@@ -86,6 +93,7 @@ void Analysis_Template_MC::beginJob()
  //--------------------------- analyze() fuction declaration ------------------ //
 void Analysis_Template_MC::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetup)
  {
+
   unsigned NEntries = mTree->GetEntries();
   cout<<"Reading TREE: "<<NEntries<<" events"<<endl;
 
@@ -94,8 +102,7 @@ void Analysis_Template_MC::analyze(edm::Event const& iEvent, edm::EventSetup con
    float hweight=1.;  ///Initial value to one
 
    for(unsigned  l=0; l<NEntries; l++) {
-   //for(unsigned  l=0; l<100; l++) {
-
+   //for(unsigned  l=0; l<5; l++) {
 
 
     //----------- progress report -------------
@@ -119,6 +126,7 @@ void Analysis_Template_MC::analyze(edm::Event const& iEvent, edm::EventSetup con
     ///Examine GenJets
     unsigned n_genJets = Event->nGenJets();
 
+
     /// Dump all GEN jets
     if(mprintOk==1){
        printf("Number of GENJets=%d\n",n_genJets);
@@ -129,7 +137,7 @@ void Analysis_Template_MC::analyze(edm::Event const& iEvent, edm::EventSetup con
 
     ///Apply Jet cuts.  Very General to all existing GEN Jets
     int GENjet_ok[100]; for(int ii=0;ii<100;++ii){GENjet_ok[ii]=0;}
-    
+
     for(unsigned j=0; j< n_genJets; ++j){
 	if(Event->genjet(j).pt()<mMinPt) continue;
 	if(fabs(Event->genjet(j).Rapidity())>mYMax) continue;
@@ -161,10 +169,14 @@ void Analysis_Template_MC::analyze(edm::Event const& iEvent, edm::EventSetup con
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// PFJets
-    /////////////////////////////////////////////Vertex!!!!////////////////////////////////////////////////////////
+    /////////////////////////////////////////////Vertex!!!!/////////////////////////////////////
+    unsigned n_PFJets = Event->nPFJets();
+
+    jecs->JEC_corrections(Event, n_PFJets, mIsMCarlo);
+
 
     /// Vertex selection
-    if(mprintOk==1) cout<<"Vertex info: numVtx="<<Event->evtHdr().nVtx()<<"  numVtxGood="<<Event->evtHdr().nVtxGood()<<"  isPVgood()="<<Event->evtHdr().isPVgood()<<endl;
+    if(mprintOk==1) cout<<"Vertex info: numVtx="<<Event->evtHdr().nVtx()<<"  numVtxGood="<<Event->evtHdr().nVtxGood()<<"  isPVgood()="<<Event->evtHdr().isPVgood()<<"   pfRho="<<Event->evtHdr().pfRho()<<endl;
 
     num_of_Vtx->Fill(Event->evtHdr().nVtx());
     /// Keep events with PVgood
@@ -173,11 +185,10 @@ void Analysis_Template_MC::analyze(edm::Event const& iEvent, edm::EventSetup con
     num_of_VtxGood->Fill(Event->evtHdr().nVtxGood());
 
     /// Dump all jets No cuts only isPVgood()
-    unsigned n_PFJets = Event->nPFJets();
     if(mprintOk==1){
        printf("Number of PFJets=%d\n",n_PFJets);
        for(unsigned j=0; j<n_PFJets; ++j){
-          printf("j=%2d  pt=%8.3f  y=%6.3f  phi=%6.3f\n",j,Event->pfjet(j).ptCor(),Event->pfjet(j).y(),Event->pfjet(j).phi());
+          printf("j=%2d  pt=%8.3f  y=%6.3f  phi=%6.3f   cor=%6.3f   tightID=%d\n",j,Event->pfjet(j).ptCor(),Event->pfjet(j).y(),Event->pfjet(j).phi(),Event->pfjet(j).cor(),Event->pfjet(j).tightID());
        }
     }
 
