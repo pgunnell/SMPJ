@@ -58,16 +58,16 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 	jetSeq += getattr(proc, 'chs')
 
 
-	## Filter out neutrinos from packed GenParticles
-	setattr( proc, 'packedGenParticlesForJets', 
-			cms.EDFilter("CandPtrSelector", 
-				src = cms.InputTag("packedGenParticles"), 
-				cut = cms.string("abs(pdgId) != 12 && abs(pdgId) != 14 && abs(pdgId) != 16")
-				))
-	jetSeq += getattr(proc, 'packedGenParticlesForJets' )
+	### Filter out neutrinos from packed GenParticles
+	#setattr( proc, 'packedGenParticlesForJets', 
+			#cms.EDFilter("CandPtrSelector", 
+				#src = cms.InputTag("packedGenParticles"), 
+				#cut = cms.string("abs(pdgId) != 12 && abs(pdgId) != 14 && abs(pdgId) != 16")
+				#))
+	#jetSeq += getattr(proc, 'packedGenParticlesForJets' )
 	    
 	setattr( proc, jetalgo+'GenJets', 
-			ak4GenJets.clone( src = 'packedGenParticlesForJets', 
+			ak4GenJets.clone( src = 'packedGenParticles', #'packedGenParticlesForJets', 
 				rParam = jetSize, 
 				jetAlgorithm = algorithm ) ) 
 	jetSeq += getattr(proc, jetalgo+'GenJets' )
@@ -207,19 +207,17 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer_miniAOD',
 )
 
 
-#jetToolbox( process, 'ak8', 'ak8JetSubs','CHS')
-#jetToolbox( process, 'ak8', 'ak8JetSubs')
+jetToolbox( process, 'ak8', 'ak8JetSubs','CHS')
+jetToolbox( process, 'ak8', 'ak8JetSubs')
 
-#process.ak8GenJets = process.ak4GenJets.clone()
-#process.ak8GenJets.rParam = cms.double(0.8)
+process.ak8GenJets = process.ak4GenJets.clone()
+process.ak8GenJets.rParam = cms.double(0.8)
 
-#process.ak8 = process.ak4.clone(
-	#pfjets          = cms.InputTag('slimmedJetsAK8'),
-	#pfjetschs       = cms.InputTag('slimmedJetsAK8'),
-	### MET collection ####
-	#pfmet           = cms.InputTag('slimmedMETs'),
-	#genjets         = cms.untracked.InputTag('ak8GenJets'),
-#)
+process.ak8 = process.ak4.clone(
+	pfjets          = cms.InputTag('selectedPatJetsAK8PF'),
+	pfjetschs       = cms.InputTag('selectedPatJetsAK8PFCHS'),
+	genjets         = cms.untracked.InputTag('ak8GenJets'),
+)
 jetToolbox( process, 'ak7', 'ak7JetSubs', PUMethod='CHS') 
 jetToolbox( process, 'ak7', 'ak7JetSubs', PUMethod='') 
 
@@ -229,27 +227,23 @@ process.ak7GenJets.rParam = cms.double(0.7)
 process.ak7 = process.ak4.clone(
 	pfjets          = cms.InputTag('selectedPatJetsAK7PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK7PFCHS'),
-	## MET collection ####
-	pfmet           = cms.InputTag('slimmedMETs'),
 	genjets         = cms.untracked.InputTag('ak7GenJets'),
 )
 
-#jetToolbox( process, 'ak5', 'ak5JetSubs','CHS')
-#jetToolbox( process, 'ak5', 'ak7JetSubs')
+jetToolbox( process, 'ak5', 'ak5JetSubs','CHS')
+jetToolbox( process, 'ak5', 'ak5JetSubs')
 
-#process.ak5GenJets = process.ak5GenJets.clone()
-#process.ak5GenJets.rParam = cms.double(0.5)
+process.ak5GenJets = process.ak5GenJets.clone()
+process.ak5GenJets.rParam = cms.double(0.5)
 
-#process.ak5 = process.ak4.clone(
-	#pfjets          = cms.InputTag('selectedPatJetsAK5PF'),
-	#pfjetschs       = cms.InputTag('selectedPatJetsAK5PFCHS'),
-	### MET collection ####
-	#pfmet           = cms.InputTag('pfMet'),
-	#genjets         = cms.untracked.InputTag('ak5GenJets'),
-#)
+process.ak5 = process.ak4.clone(
+	pfjets          = cms.InputTag('selectedPatJetsAK5PFCHS'),
+	pfjetschs       = cms.InputTag('selectedPatJetsAK5PFCHS'),
+	genjets         = cms.untracked.InputTag('ak5GenJets'),
+)
 
 
-process.p = cms.Path( process.ak4*process.ak7)#*process.ak5*process.ak7*process.ak8 )
+process.p = cms.Path( process.ak4*process.ak7*process.ak5*process.ak7*process.ak8 )
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
