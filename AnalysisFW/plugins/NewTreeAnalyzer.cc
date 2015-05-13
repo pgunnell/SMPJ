@@ -653,7 +653,7 @@ void NewTreeAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
       {
        QCDPFJet thisJet = mPFJets[iJet];
 
-        bool cutID =(thisJet.tightID() && (thisJet.elf() < 0.9) && (thisJet.muf() < 0.9) && (thisJet.nhf() < 0.9)  && (thisJet.phf() < 0.9) &&
+        bool cutID =(thisJet.tightID() && (thisJet.cemf() < 0.9) && (thisJet.muf() < 0.9) && (thisJet.nhf() < 0.9)  && (thisJet.nemf() < 0.9) &&
         (Event->pfmet().met_o_sumet()<0.3) && (Event->evtHdr().pfRho()<100) && (Event->evtHdr().isPVgood()));
 
         if(cutID) {
@@ -681,8 +681,8 @@ void NewTreeAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
                    //------------------------- Fill Of JetID variable -------------------//
                     ChHadFr[i][j][k] ->Fill(thisJet.chf(),wt);
                     NuHadFr[i][j][k] ->Fill(thisJet.nhf(),wt);
-                    PhFr[i][j][k] ->Fill(thisJet.phf(),wt);
-                    ElFr[i][j][k] ->Fill(thisJet.elf(),wt);
+                    PhFr[i][j][k] ->Fill(thisJet.nemf(),wt);
+                    ElFr[i][j][k] ->Fill(thisJet.cemf(),wt);
                     MuFr[i][j][k] ->Fill(thisJet.muf(),wt);
                    //----------------------- Fill For Data-MC --------------------------//
                    //PFJet2[i][j][k] -> Fill(Event->pfjet(p).ptCor(),wt);
@@ -781,7 +781,7 @@ void NewTreeAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
         QCDPFJet jet1 = mPFJets[irand] ;
         QCDPFJet jet2 = mPFJets[irand2];
 
-       bool cutID2=((jet1.elf() < 0.9) && (jet1.muf() < 0.9) && (jet1.nhf() < 0.9) && (jet1.phf() < 0.9) &&  (Event->pfmet().met_o_sumet()<0.3) );
+       bool cutID2=((jet1.cemf() < 0.9) && (jet1.muf() < 0.9) && (jet1.nhf() < 0.9) && (jet1.nemf() < 0.9) &&  (Event->pfmet().met_o_sumet()<0.3) );
 
       double dphi = DeltaPhi(jet1.phi(),jet2.phi());
 
@@ -795,7 +795,7 @@ void NewTreeAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
              if(jet2.ptCor()>=HLTJetPtS[i] && jet2.ptCor()<HLTJetPtS[i+1]) {
                  TagJet[i][j][k]->Fill(jet2.ptCor(),prescalej[i][j]);
 
-                  if(jet2.tightID()  &&  (jet2.elf() < 0.9) && (jet2.muf() < 0.9) && (jet2.nhf() < 0.9) && (jet2.phf() < 0.9)) {
+                  if(jet2.tightID()  &&  (jet2.cemf() < 0.9) && (jet2.muf() < 0.9) && (jet2.nhf() < 0.9) && (jet2.nemf() < 0.9)) {
                   ProbeJet[i][j][k]->Fill(jet2.ptCor(),prescalej[i][j]);
                    } // if(Event->pfjet(irand2).tightID())
 
@@ -818,7 +818,7 @@ void NewTreeAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& i
 
         QCDPFJet thisJet = mPFJets[iJet];
 
-  bool cutID=(thisJet.tightID() && (thisJet.elf() < 0.9) && (thisJet.muf() < 0.9) && (thisJet.nhf() < 0.9) && (thisJet.phf() < 0.9) && (Event->pfmet().met_o_sumet()<0.3));
+  bool cutID=(thisJet.tightID() && (thisJet.cemf() < 0.9) && (thisJet.muf() < 0.9) && (thisJet.nhf() < 0.9) && (thisJet.nemf() < 0.9) && (Event->pfmet().met_o_sumet()<0.3));
 
       if(cutID) {
       for (int k=0; k<nEtabin; k++)

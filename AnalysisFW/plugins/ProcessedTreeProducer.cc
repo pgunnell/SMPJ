@@ -375,10 +375,16 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
        //---- get the vector of tracks -----
        reco::TrackRefVector vTrks(i_pfjet->associatedTracks());
        float sumTrkPt(0.0),sumTrkPtBeta(0.0),sumTrkPtBetaStar(0.0),beta(0.0),betaStar(0.0);
+       int mpuTrk(0), mlvTrk(0); // # of pile-up tracks & lead-vertex tracks ## Juska
+       int mjtTrk(0); // multiplicity of _all_ tracks in jet (also vtx-unassociated!) ## Juska
+       
        //---- loop over the tracks of the jet ----
+       //std::cout << "starting the loop yo!" << std::endl; // debug
+       //std::cout << "vTrks.size()" << vTrks.size() << std::endl;
        for(reco::TrackRefVector::const_iterator i_trk = vTrks.begin(); i_trk != vTrks.end(); i_trk++) {
         if (recVtxs->size() == 0) break;
         sumTrkPt += (*i_trk)->pt();
+        mjtTrk++; //Juska
         //---- loop over all vertices ----------------------------
         for(unsigned ivtx = 0;ivtx < recVtxs->size();ivtx++) {
         //---- loop over the tracks associated with the vertex ---
@@ -390,9 +396,11 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
             if (trkRef == (*i_trk)) {
               if (ivtx == 0) {
                 sumTrkPtBeta += (*i_trk)->pt();
+                mlvTrk++; //Juska
               }
               else {
                 sumTrkPtBetaStar += (*i_trk)->pt();
+                mpuTrk++; //Juska
                 } 
                 break;
              } // if (trkRef == (*i_trk))
@@ -431,13 +439,14 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
      qcdpfjet.setArea(i_pfjet->jetArea());
 
     double chf   = i_pfjet->chargedHadronEnergyFraction();
-    double nhf   = i_pfjet->neutralHadronEnergyFraction() + i_pfjet->HFHadronEnergyFraction();
-//    double nhf   = i_pfjet->neutralHadronEnergyFraction();
-    double phf   = i_pfjet->photonEnergyFraction();
-    double elf   = i_pfjet->electronEnergyFraction();
+    double nhf   = i_pfjet->neutralHadronEnergyFraction(); //+ i_pfjet->HFHadronEnergyFraction();
+    double nemf   = i_pfjet->neutralEmEnergyFraction(); // equals to old phf with HF info included
+    //double elf   = i_pfjet->electronEnergyFraction(); equals to cemf
+    double cemf  = i_pfjet->chargedEmEnergyFraction();
     double muf   = i_pfjet->muonEnergyFraction();
     double hf_hf = i_pfjet->HFHadronEnergyFraction();
     double hf_phf= i_pfjet->HFEMEnergyFraction();
+    
     int hf_hm    = i_pfjet->HFHadronMultiplicity();
     int hf_phm   = i_pfjet->HFEMMultiplicity();
     int chm      = i_pfjet->chargedHadronMultiplicity();
@@ -446,14 +455,24 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     int elm      = i_pfjet->electronMultiplicity();
     int mum      = i_pfjet->muonMultiplicity();
     int npr      = i_pfjet->chargedMultiplicity() + i_pfjet->neutralMultiplicity();
-    bool looseID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjet->eta())<=2.4 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjet->eta())>2.4));
-    bool tightID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjet->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjet->eta())>2.4));
+    //bool looseID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjet->eta())<=2.4 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjet->eta())>2.4));
+    //bool tightID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjet->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjet->eta())>2.4));
+        // https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID
+    float eta    = i_pfjet->eta();
+    int cm       = i_pfjet->chargedMultiplicity();
+    bool looseID = (nhf<0.99 && nemf<0.99 && npr>1 && muf<0.8) && ((fabs(eta) <= 2.4 && chf>0 && cm>0 && cemf<0.99) || fabs(eta)>2.4);
+    bool tightID = (nhf<0.90 && nemf<0.90 && npr>1 && muf<0.8) && ((fabs(eta)<=2.4 && chf>0 && cm>0 && cemf<0.90) || fabs(eta)>2.4);
+    
     qcdpfjet.setLooseID(looseID);
     qcdpfjet.setTightID(tightID);
-    qcdpfjet.setFrac(chf,nhf,phf,elf,muf);
+    qcdpfjet.setFrac(chf,nhf,nemf,cemf,muf);
     qcdpfjet.setMulti(npr,chm,nhm,phm,elm,mum);
     qcdpfjet.setHFFrac(hf_hf,hf_phf);
     qcdpfjet.setHFMulti(hf_hm,hf_phm);
+    
+    double hof   = i_pfjet->hoEnergyFraction(); // Juska
+    qcdpfjet.setVtxInfo(mpuTrk,mlvTrk,mjtTrk);
+    qcdpfjet.setHO(hof);
 
     if (mIsMCarlo) {
       GenJetCollection::const_iterator i_matched;
@@ -521,10 +540,17 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
        //---- get the vector of tracks -----
        reco::TrackRefVector vTrksCHS(i_pfjetchs->associatedTracks());
        float sumTrkPtCHS(0.0),sumTrkPtBetaCHS(0.0),sumTrkPtBetaStarCHS(0.0),betaCHS(0.0),betaStarCHS(0.0);
+
+       // Dunno how useful these are in chs jets...       
+       int mpuTrk(0), mlvTrk(0); // # of pile-up tracks & lead-vertex tracks ## Juska
+       int mjtTrk(0); // multiplicity of _all_ tracks in jet (also vtx-unassociated!) ## Juska
+       
        //---- loop over the tracks of the jet ----
+       
        for(reco::TrackRefVector::const_iterator i_trkchs = vTrksCHS.begin(); i_trkchs != vTrksCHS.end(); i_trkchs++) {
         if (recVtxs->size() == 0) break;
         sumTrkPtCHS += (*i_trkchs)->pt();
+        mjtTrk++; //Juska
         //---- loop over all vertices ----------------------------
         for(unsigned ivtx = 0;ivtx < recVtxs->size();ivtx++) {
         //---- loop over the tracks associated with the vertex ---
@@ -536,9 +562,11 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
             if (trkRef == (*i_trkchs)) {
               if (ivtx == 0) {
                 sumTrkPtBetaCHS += (*i_trkchs)->pt();
+                mlvTrk++; //Juska
               }
               else {
                 sumTrkPtBetaStarCHS += (*i_trkchs)->pt();
+                mpuTrk++; //Juska
                 }
                 break;
              } // if (trkRef == (*i_trk))
@@ -577,10 +605,9 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
      qcdpfjetchs.setArea(i_pfjetchs->jetArea());
 
     double chf   = i_pfjetchs->chargedHadronEnergyFraction();
-    double nhf   = i_pfjetchs->neutralHadronEnergyFraction() + i_pfjetchs->HFHadronEnergyFraction(); 
-//    double nhf   = i_pfjetchs->neutralHadronEnergyFraction();
-    double phf   = i_pfjetchs->photonEnergyFraction();
-    double elf   = i_pfjetchs->electronEnergyFraction();
+    double nhf   = i_pfjetchs->neutralHadronEnergyFraction();// + i_pfjetchs->HFHadronEnergyFraction();
+    double nemf   = i_pfjetchs->neutralEmEnergyFraction(); // equals to deprecated phf but has HF info too
+    double cemf  = i_pfjetchs->chargedEmEnergyFraction(); // equals to deprecated elf
     double muf   = i_pfjetchs->muonEnergyFraction();
     double hf_hf = i_pfjetchs->HFHadronEnergyFraction();
     double hf_phf= i_pfjetchs->HFEMEnergyFraction();
@@ -592,14 +619,25 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     int elm      = i_pfjetchs->electronMultiplicity();
     int mum      = i_pfjetchs->muonMultiplicity();
     int npr      = i_pfjetchs->chargedMultiplicity() + i_pfjetchs->neutralMultiplicity();
-    bool looseID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjetchs->eta())<=2.4 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjetchs->eta())>2.4));
-    bool tightID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjetchs->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjetchs->eta())>2.4));
+    //bool looseID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjetchs->eta())<=2.4 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjetchs->eta())>2.4));
+    //bool tightID  = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_pfjetchs->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_pfjetchs->eta())>2.4));
+    // https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID
+    float eta    = i_pfjetchs->eta();
+    int cm       = i_pfjetchs->chargedMultiplicity();
+    bool looseID = (nhf<0.99 && nemf<0.99 && npr>1 && muf<0.8) && ((fabs(eta) <= 2.4 && chf>0 && cm>0 && cemf<0.99) || fabs(eta)>2.4);
+    bool tightID = (nhf<0.90 && nemf<0.90 && npr>1 && muf<0.8) && ((fabs(eta)<=2.4 && chf>0 && cm>0 && cemf<0.90) || fabs(eta)>2.4);
+
     qcdpfjetchs.setLooseID(looseID);
     qcdpfjetchs.setTightID(tightID);
-    qcdpfjetchs.setFrac(chf,nhf,phf,elf,muf);
+    qcdpfjetchs.setFrac(chf,nhf,nemf,cemf,muf);
     qcdpfjetchs.setMulti(npr,chm,nhm,phm,elm,mum);
     qcdpfjetchs.setHFFrac(hf_hf,hf_phf);
     qcdpfjetchs.setHFMulti(hf_hm,hf_phm);
+    
+
+    double hof   = i_pfjetchs->hoEnergyFraction(); // Juska
+    qcdpfjetchs.setVtxInfo(mpuTrk,mlvTrk,mjtTrk);
+    qcdpfjetchs.setHO(hof);
 
     if (mIsMCarlo) {
       GenJetCollection::const_iterator i_matchedchs;
