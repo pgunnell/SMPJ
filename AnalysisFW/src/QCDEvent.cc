@@ -1,10 +1,9 @@
 #include "SMPJ/AnalysisFW/interface/QCDEvent.h"
 //---------------------------------------------------
 QCDEvent::QCDEvent()
-{  
+{
   L1Obj_.clear();
-  CaloJets_.clear();
-  PFJets_.clear(); 
+  PFJets_.clear();
   PFJetsCHS_.clear();
   GenJets_.clear();
 }
@@ -13,16 +12,16 @@ QCDEvent::~QCDEvent()
 {
 }
 //---------------------------------------------------
-void QCDEvent::setCaloJets(const std::vector<QCDCaloJet>& fCaloJets) 
-{ 
-  CaloJets_.clear();
-  for(unsigned i=0;i<fCaloJets.size();i++) {
-    CaloJets_.push_back(fCaloJets[i]);
-  }
-}
+//void QCDEvent::setCaloJets(const std::vector<QCDCaloJet>& fCaloJets)
+//{
+//  CaloJets_.clear();
+//  for(unsigned i=0;i<fCaloJets.size();i++) {
+//    CaloJets_.push_back(fCaloJets[i]);
+//  }
+//}
 //---------------------------------------------------
-void QCDEvent::setPFJets(const std::vector<QCDPFJet>& fPFJets) 
-{ 
+void QCDEvent::setPFJets(const std::vector<QCDPFJet>& fPFJets)
+{
   PFJets_.clear();
   for(unsigned i=0;i<fPFJets.size();i++) {
     PFJets_.push_back(fPFJets[i]);
@@ -38,13 +37,13 @@ void QCDEvent::setPFJetsCHS(const std::vector<QCDPFJet>& fPFJetsCHS)
 }
 //---------------------------------------------------
 
-void QCDEvent::setFatJets(const std::vector<QCDJet>& fFatJets)
-{
-  FatJets_.clear();
-  for(unsigned i=0;i<fFatJets.size();i++) {
-    FatJets_.push_back(fFatJets[i]);
-  }
-}
+//void QCDEvent::setFatJets(const std::vector<QCDJet>& fFatJets)
+//{
+//  FatJets_.clear();
+//  for(unsigned i=0;i<fFatJets.size();i++) {
+//    FatJets_.push_back(fFatJets[i]);
+//  }
+//}
 //---------------------------------------------------
 void QCDEvent::setGenJets(const std::vector<LorentzVector>& fGenJets)
 {
@@ -54,7 +53,7 @@ void QCDEvent::setGenJets(const std::vector<LorentzVector>& fGenJets)
   }
 }
 //---------------------------------------------------
-void QCDEvent::setL1Obj(const std::vector<std::vector<LorentzVector> >& fL1Obj)       
+void QCDEvent::setL1Obj(const std::vector<std::vector<LorentzVector> >& fL1Obj)
 {
   L1Obj_.clear();
   for(unsigned i=0;i<fL1Obj.size();i++) {
@@ -66,7 +65,7 @@ void QCDEvent::setL1Obj(const std::vector<std::vector<LorentzVector> >& fL1Obj)
   }
 }
 //---------------------------------------------------
-void QCDEvent::setHLTObj(const std::vector<std::vector<LorentzVector> >& fHLTObj)       
+void QCDEvent::setHLTObj(const std::vector<std::vector<LorentzVector> >& fHLTObj)
 {
   HLTObj_.clear();
   for(unsigned i=0;i<fHLTObj.size();i++) {
@@ -93,7 +92,7 @@ int QCDEvent::nGoodJets(int unc, int id, float ymax, float ptmin, std::vector<QC
     bool passID(true);
     if (id == 1 && !jets[i].looseID())
       passID = false;
-    if (id == 2 && !jets[i].tightID()) 
+    if (id == 2 && !jets[i].tightID())
       passID = false;
     if (passID) {
       if (fabs(jets[i].y()) <= ymax && jets[i].ptCor()*(1+sign*jets[i].unc()) >= ptmin)
@@ -132,7 +131,7 @@ float QCDEvent::pfmjjcor(int k)
     if (k>0)
       sign = 1;
     if (k<0)
-      sign = -1;  
+      sign = -1;
     const LorentzVector& P0 = PFJets_[0].p4();
     const LorentzVector& P1 = PFJets_[1].p4();
     double cor0 = PFJets_[0].cor();
@@ -201,57 +200,57 @@ float QCDEvent::pfchsmjjcor(int k,int src)
 }
 
 
+////---------------------------------------------------
+//float QCDEvent::fatmjjcor(int k)
+//{
+//  int sign(0);
+//  if (FatJets_.size() < 2)
+//    return 0.0;
+//  else {
+//    if (k>0)
+//      sign = 1;
+//    if (k<0)
+//      sign = -1;
+//    const LorentzVector& P0 = FatJets_[0].p4();
+//    const LorentzVector& P1 = FatJets_[1].p4();
+//    double cor0 = FatJets_[0].cor();
+//    double cor1 = FatJets_[1].cor();
+//    double unc0 = FatJets_[0].unc();
+//    double unc1 = FatJets_[1].unc();
+//    return (cor0*(1+sign*unc0)*P0+cor1*(1+sign*unc1)*P1).mass();
+//  }
+//}
 //---------------------------------------------------
-float QCDEvent::fatmjjcor(int k)
-{
-  int sign(0);
-  if (FatJets_.size() < 2)
-    return 0.0;
-  else {
-    if (k>0)
-      sign = 1;
-    if (k<0)
-      sign = -1;
-    const LorentzVector& P0 = FatJets_[0].p4();
-    const LorentzVector& P1 = FatJets_[1].p4();
-    double cor0 = FatJets_[0].cor();
-    double cor1 = FatJets_[1].cor();
-    double unc0 = FatJets_[0].unc();
-    double unc1 = FatJets_[1].unc();
-    return (cor0*(1+sign*unc0)*P0+cor1*(1+sign*unc1)*P1).mass();
-  }
-}
-//---------------------------------------------------
-float QCDEvent::calomjj()
-{
-  if (CaloJets_.size() < 2)
-    return 0.0;
-  else {
-    const LorentzVector& P0 = CaloJets_[0].p4();
-    const LorentzVector& P1 = CaloJets_[1].p4();
-    return (P0+P1).mass();
-  }
-}
-//---------------------------------------------------
-float QCDEvent::calomjjcor(int k)
-{
-  int sign(0);
-  if (CaloJets_.size() < 2)
-    return 0.0;
-  else {
-    if (k>0)
-      sign = 1;
-    if (k<0)
-      sign = -1;
-    const LorentzVector& P0 = CaloJets_[0].p4();
-    const LorentzVector& P1 = CaloJets_[1].p4();
-    double cor0 = CaloJets_[0].cor();
-    double cor1 = CaloJets_[1].cor();
-    double unc0 = CaloJets_[0].unc();
-    double unc1 = CaloJets_[1].unc();
-    return (cor0*(1+sign*unc0)*P0+cor1*(1+sign*unc1)*P1).mass();
-  }
-}
+//float QCDEvent::calomjj()
+//{
+//  if (CaloJets_.size() < 2)
+//    return 0.0;
+//  else {
+//    const LorentzVector& P0 = CaloJets_[0].p4();
+//    const LorentzVector& P1 = CaloJets_[1].p4();
+//    return (P0+P1).mass();
+//  }
+//}
+////---------------------------------------------------
+//float QCDEvent::calomjjcor(int k)
+//{
+//  int sign(0);
+//  if (CaloJets_.size() < 2)
+//    return 0.0;
+//  else {
+//    if (k>0)
+//      sign = 1;
+//    if (k<0)
+//      sign = -1;
+//    const LorentzVector& P0 = CaloJets_[0].p4();
+//    const LorentzVector& P1 = CaloJets_[1].p4();
+//    double cor0 = CaloJets_[0].cor();
+//    double cor1 = CaloJets_[1].cor();
+//    double unc0 = CaloJets_[0].unc();
+//    double unc1 = CaloJets_[1].unc();
+//    return (cor0*(1+sign*unc0)*P0+cor1*(1+sign*unc1)*P1).mass();
+//  }
+//}
 //---------------------------------------------------
 float QCDEvent::pfmjjgen()
 {
@@ -264,15 +263,15 @@ float QCDEvent::pfmjjgen()
   }
 }
 //---------------------------------------------------
-float QCDEvent::calomjjgen()
-{
-  if (CaloJets_.size() < 2)
-    return 0.0;
-  else {
-    const LorentzVector& P0 = CaloJets_[0].genp4();
-    const LorentzVector& P1 = CaloJets_[1].genp4();
-    return (P0+P1).mass();
-  }
-}
+//float QCDEvent::calomjjgen()
+//{
+//  if (CaloJets_.size() < 2)
+//    return 0.0;
+//  else {
+//    const LorentzVector& P0 = CaloJets_[0].genp4();
+//    const LorentzVector& P1 = CaloJets_[1].genp4();
+//    return (P0+P1).mass();
+//  }
+//}
 
 

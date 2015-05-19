@@ -14,7 +14,6 @@
 #include "SMPJ/AnalysisFW/interface/QCDJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDEvent.h"
 #include "SMPJ/AnalysisFW/interface/QCDEventHdr.h"
-#include "SMPJ/AnalysisFW/interface/QCDCaloJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDPFJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDMET.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -39,9 +38,6 @@ class ProcessedTreeProducer : public edm::EDAnalyzer
     virtual ~ProcessedTreeProducer();
   private:
     void buildTree();
-    static bool sort_calojets(QCDCaloJet j1, QCDCaloJet j2) {
-      return j1.ptCor() > j2.ptCor();
-    }
     static bool sort_pfjets(QCDPFJet j1, QCDPFJet j2) {
       return j1.ptCor() > j2.ptCor();
     }
@@ -49,28 +45,23 @@ class ProcessedTreeProducer : public edm::EDAnalyzer
     bool   mIsMCarlo;
     bool   mUseGenInfo;
     bool   mPrintTriggerMenu;
-    bool   isPFJecUncSet_,isCaloJecUncSet_,isPFJecUncSetCHS_;
-    int    mGoodVtxNdof,mMinNCaloJets,mMinNPFJets;
+    bool   isPFJecUncSet_,isPFJecUncSetCHS_;
+    int    mGoodVtxNdof,mMinNPFJets;
     double mGoodVtxZ;
-    double mMinCaloPt,mMinPFPt,mMinPFFatPt,mMaxPFFatEta,mMinGenPt,mMaxY,mMinJJMass;
-    std::string mCaloJECservice;
+    double mMinPFPt,mMinPFFatPt,mMaxPFFatEta,mMinGenPt,mMaxY,mMinJJMass;
     std::string mPFJECservice;
     std::string mPFPayloadName;
     std::string mPFPayloadNameCHS;
-    std::string mCaloPayloadName;
     // unc file for non CHS jet ---- //
     std::string mPFJECUncSrc;
     // unc file for CHS jet ---- //
     std::string mPFJECUncSrcCHS;
     std::vector<std::string> mPFJECUncSrcNames;
-    edm::InputTag mCaloJetsName;
     // ---- non CHS jet input tag ----- //
     edm::InputTag mPFJetsName;
     // ----CHS jet input tag ----- //
     edm::InputTag mPFJetsNameCHS;
     edm::InputTag mGenJetsName;
-    edm::InputTag mCaloJetID;
-    edm::InputTag mCaloJetExtender;
     edm::InputTag mOfflineVertices;
     edm::InputTag mSrcCaloRho;
     edm::InputTag mSrcPFRho;
@@ -90,8 +81,6 @@ class ProcessedTreeProducer : public edm::EDAnalyzer
     HLTConfigProvider hltConfig_;
     //---- CORRECTORS ----------------------
     const JetCorrector *mPFJEC;
-    const JetCorrector *mCALOJEC;
-    JetCorrectionUncertainty *mCALOUnc;
     // ---- non CHS jet uncertainty ------ //
     JetCorrectionUncertainty *mPFUnc;
     // ---- non CHS jet uncertainty ------ //

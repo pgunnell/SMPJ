@@ -26,16 +26,10 @@
 #include "DataFormats/JetReco/interface/Jet.h"
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
-#include "DataFormats/JetReco/interface/CaloJet.h"
-#include "DataFormats/JetReco/interface/CaloJetCollection.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include "DataFormats/JetReco/interface/JetExtendedAssociation.h"
 #include "DataFormats/JetReco/interface/JetID.h"
-#include "DataFormats/METReco/interface/PFMET.h"
-#include "DataFormats/METReco/interface/PFMETCollection.h"
-#include "DataFormats/METReco/interface/CaloMET.h"
-#include "DataFormats/METReco/interface/CaloMETCollection.h"
 #include "DataFormats/METReco/interface/HcalNoiseSummary.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -52,15 +46,11 @@
 ProcessedTreeProducer::ProcessedTreeProducer(edm::ParameterSet const& cfg)
 {
 //  mPFJECservice      = cfg.getParameter<std::string>               ("pfjecService");
-//  mCaloJECservice    = cfg.getParameter<std::string>               ("calojecService");
   mPFPayloadName     = cfg.getParameter<std::string>               ("PFPayloadName");
   mPFPayloadNameCHS  = cfg.getParameter<std::string>               ("PFPayloadNameCHS");
-  mCaloPayloadName   = cfg.getParameter<std::string>               ("CaloPayloadName");
   mGoodVtxNdof       = cfg.getParameter<double>                    ("goodVtxNdof");
   mGoodVtxZ          = cfg.getParameter<double>                    ("goodVtxZ");
   mMinPFPt           = cfg.getParameter<double>                    ("minPFPt");
-  mMinPFFatPt        = cfg.getParameter<double>                    ("minPFFatPt");
-  mMaxPFFatEta       = cfg.getParameter<double>                    ("maxPFFatEta");
   mMinJJMass         = cfg.getParameter<double>                    ("minJJMass");
   mMaxY              = cfg.getParameter<double>                    ("maxY");
   mMinNPFJets        = cfg.getParameter<int>                       ("minNPFJets");
@@ -69,7 +59,6 @@ ProcessedTreeProducer::ProcessedTreeProducer(edm::ParameterSet const& cfg)
   mPFJetsNameCHS     = cfg.getParameter<edm::InputTag>             ("pfjetschs");
   mSrcCaloRho        = cfg.getParameter<edm::InputTag>             ("srcCaloRho");
   mSrcPFRho          = cfg.getParameter<edm::InputTag>             ("srcPFRho");
-  //mPFMET             = cfg.getParameter<edm::InputTag>             ("pfmet");
   mPFMET             =(consumes<pat::METCollection>(cfg.getParameter<edm::InputTag>("pfmet")));
   mSrcPU             = cfg.getUntrackedParameter<edm::InputTag>    ("srcPU",edm::InputTag("addPileupInfo"));
   mGenJetsName       = cfg.getUntrackedParameter<edm::InputTag>    ("genjets",edm::InputTag(""));
@@ -99,7 +88,6 @@ void ProcessedTreeProducer::beginJob()
   mTriggerPassHisto->SetBit(TH1::kCanRebin);
   isPFJecUncSet_ = false;
   isPFJecUncSetCHS_ = false;
-  isCaloJecUncSet_ = false;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void ProcessedTreeProducer::endJob()
@@ -141,7 +129,7 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
   vector<QCDPFJet>      mPFJetsCHS;
   vector<LorentzVector> mGenJets;
   QCDEventHdr mEvtHdr;
-  QCDMET mCaloMet,mPFMet;
+  QCDMET mPFMet;
 
 
   //-------------- Basic Event Info ------------------------------
@@ -330,7 +318,6 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
 
   //---------------- Jets ---------------------------------------------
   //mPFJEC   = JetCorrector::getJetCorrector(mPFJECservice,iSetup);
-  //mCALOJEC = JetCorrector::getJetCorrector(mCaloJECservice,iSetup);
 
   edm::ESHandle<JetCorrectorParametersCollection> PFJetCorParColl;
   if (mPFPayloadName != "" && !isPFJecUncSet_){
@@ -673,27 +660,17 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
 
 
   //---------------- met ---------------------------------------------
-//  Handle<PFMETCollection> pfmet;
-//  Handle<CaloMETCollection> calomet;
-//  event.getByLabel("pfMet",pfmet);
-//  event.getByLabel(mPFMET,pfmet);
-//  event.getByLabel("caloMet",calomet);
-//  mPFMet.setVar((*pfmet)[0].et(),(*pfmet)[0].sumEt(),(*pfmet)[0].phi());
-//  mCaloMet.setVar((*calomet)[0].et(),(*calomet)[0].sumEt(),(*calomet)[0].phi());
-    Handle<pat::METCollection> pfmet;
+  Handle<pat::METCollection> pfmet;
   event.getByToken(mPFMET, pfmet);
   const pat::MET &met = pfmet->front();
   mPFMet.setVar(met.et(),met.sumEt(),met.phi());
 
-  //mPFMet.setVar((*pfmet)[0].et(),(*pfmet)[0].sumEt(),(*pfmet)[0].phi());
-  //mCaloMet.setVar((*calomet)[0].et(),(*calomet)[0].sumEt(),(*calomet)[0].phi());
   //-------------- fill the tree -------------------------------------
   sort(mPFJets.begin(),mPFJets.end(),sort_pfjets);
   mEvent->setEvtHdr(mEvtHdr);
   mEvent->setPFJets(mPFJets);
   mEvent->setPFJetsCHS(mPFJetsCHS); // -- later substitute chs jets
   mEvent->setGenJets(mGenJets);
-  //mEvent->setCaloMET(mCaloMet);
   mEvent->setPFMET(mPFMet);
   mEvent->setL1Obj(mL1Objects);
   mEvent->setHLTObj(mHLTObjects);
@@ -707,8 +684,6 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     //delete mPFUnc;
     //delete mPFUncSrc;
  //}
-  //if (mCaloPayloadName != "")
-    //delete mCALOUnc;
 
 
 
