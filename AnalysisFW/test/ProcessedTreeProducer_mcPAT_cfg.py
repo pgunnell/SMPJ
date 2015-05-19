@@ -12,6 +12,10 @@ from RecoJets.JetProducers.CATopJetParameters_cfi import *
 from PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff import *
 from PhysicsTools.PatAlgos.selectionLayer1.jetSelector_cfi import selectedPatJets
 from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection
+from PhysicsTools.PatAlgos.producersLayer1.metProducer_cfi import patMETs
+
+from PhysicsTools.PatAlgos.patSequences_cff import *
+from PhysicsTools.PatAlgos.tools.metTools import *
 
 
 ## Modified version of jetToolBox from https://github.com/cms-jet/jetToolbox
@@ -26,12 +30,13 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 	jetSize = float('0.'+jetType[-1:])
 	jetALGO = jetType.upper()
 	jetalgo = jetType.lower()
+	elemToKeep = []
 
 	print 'Running processes with: '+str(jetALGO)+' PF '+PUMethod+' jet algorithm with radius parameter '+str(jetSize)
 
 	JETCorrPayload = 'AK'+size+'PFchs'
-	#JETCorrLevels = ['L1FastJet', 'L2Relative', 'L3Absolute']
-	JETCorrLevels = [] #No JEC corrections
+	JETCorrLevels = ['L1FastJet', 'L2Relative', 'L3Absolute']
+	#JETCorrLevels = [] #No JEC corrections
 	JEC = ( JETCorrPayload, JETCorrLevels , 'None')
 
 
@@ -41,11 +46,10 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 
 	jetSeq = cms.Sequence()
 
-	#genParticlesLabel = 'genParticles'
-	pvLabel = 'offlinePrimaryVertices'
-	#svLabel = 'inclusiveSecondaryVertices'
+	proc.load('RecoJets.Configuration.GenJetParticles_cff')
+	setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) ) 
+	jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
 
-	#proc.load('RecoJets.Configuration.GenJetParticles_cff')
 	proc.load('CommonTools.ParticleFlow.pfNoPileUpJME_cff')
 	#setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) )
 	#jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
@@ -81,13 +85,16 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 			rParam = jetSize,
 			jetCorrections =  JEC, #( 'AK'+size+'PFchs', cms.vstring( ['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
 			pfCandidates = cms.InputTag( 'particleFlow' ),  #'packedPFCandidates'),
-			#svSource = cms.InputTag( svLabel ),   #'slimmedSecondaryVertices'),
-			#genJetCollection = cms.InputTag( jetalgo+'GenJetsNoNu'),
-			pvSource = cms.InputTag( pvLabel ), #'offlineSlimmedPrimaryVertices'),
-			)
+			svSource = cms.InputTag('slimmedSecondaryVertices'),
+			genJetCollection = cms.InputTag( jetalgo+'GenJetsNoNu'),
+			pvSource = cms.InputTag( 'offlinePrimaryVertices' ), #'offlineSlimmedPrimaryVertices'),
+			jetTrackAssociation = True,
 
-	#getattr( proc, 'patJetCorrFactors'+jetALGO+'PF'+PUMethod ).primaryVertices = pvLabel  #'offlineSlimmedPrimaryVertices'
-	#getattr(proc,'patJetPartons').particles = cms.InputTag( genParticlesLabel ) #'prunedGenParticles')
+			)
+	elemToKeep += [ 'keep *_selectedPatJets'+jetALGO+'PF'+PUMethod+'_*_*' ]
+	elemToKeep += [ 'keep *_patMetsPF*_*_*' ]
+
+	getattr(proc,'patJetPartons').particles = cms.InputTag( 'genParticles' ) #'prunedGenParticles')
 	setattr(proc, 'selectedPatJets'+jetALGO+'PF'+PUMethod, selectedPatJets.clone( src = 'patJets'+jetALGO+'PF'+PUMethod ) )
 	setattr(proc, jetSequence, jetSeq)
 
@@ -96,6 +103,8 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 
 # -*- coding: utf-8 -*-
 import FWCore.ParameterSet.Config as cms
+
+
 
 process = cms.Process("Ntuplizer")
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -107,8 +116,12 @@ process.load('Configuration.StandardSequences.Geometry_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('RecoJets.Configuration.GenJetParticles_cff')
 process.load('RecoJets.Configuration.RecoGenJets_cff')
+process.load('RecoJets.JetProducers.TrackJetParameters_cfi')
 
 process.GlobalTag.globaltag = "PHYS14_25_V2::All"
+
+
+
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -119,7 +132,7 @@ inFiles = cms.untracked.vstring(
 'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root'
 #'file:///afs/cern.ch/work/g/gflouris/public/SMPJ_AnalysisFW/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root'
    )
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(20))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(200))
 process.source = cms.Source("PoolSource", fileNames = inFiles )
 
 jetToolbox( process, 'ak4', 'ak4JetSubs','CHS')
@@ -134,13 +147,19 @@ process.load('CommonTools.UtilAlgos.TFileService_cfi')
 process.TFileService.fileName=cms.string('MC_ProcessedTreeProducer_2.root')
 
 
+process.load("PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff")
+process.load("PhysicsTools.PatAlgos.selectionLayer1.selectedPatCandidates_cff")
+
+addMETCollection(process,'patMETPF','pfMetT1')
+
+
 process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	## jet collections ###########################
 	pfjets          = cms.InputTag('selectedPatJetsAK4PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK4PFCHS'),
 	## MET collection ####
-	pfmet           = cms.InputTag('pfMet'),
-	genjets         = cms.untracked.InputTag('ak4GenJets'),
+	pfmet           = cms.InputTag('patMETs'),
+	genjets         = cms.untracked.InputTag('ak4GenJetsNoNu'),
 	## database entry for the uncertainties ######
 	PFPayloadName   = cms.string(''),
 	PFPayloadNameCHS= cms.string(''),
@@ -185,7 +204,7 @@ process.ak8 = process.ak4.clone(
 	pfjets          = cms.InputTag('selectedPatJetsAK8PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK8PFCHS'),
 	## MET collection ####
-	pfmet           = cms.InputTag('pfMet'),
+	pfmet           = cms.InputTag('patMETs'),
 	genjets         = cms.untracked.InputTag('ak8GenJets'),
 )
 
@@ -199,8 +218,8 @@ process.ak7 = process.ak4.clone(
 	pfjets          = cms.InputTag('selectedPatJetsAK7PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK7PFCHS'),
 	## MET collection ####
-	pfmet           = cms.InputTag('pfMet'),
-	genjets         = cms.untracked.InputTag('ak7GenJets'),
+	pfmet           = cms.InputTag('patMETs'),
+	genjets         = cms.untracked.InputTag('ak7GenJetsNoNu'),
 )
 
 jetToolbox( process, 'ak5', 'ak5JetSubs','CHS')
@@ -213,12 +232,12 @@ process.ak5 = process.ak4.clone(
 	pfjets          = cms.InputTag('selectedPatJetsAK5PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK5PFCHS'),
 	## MET collection ####
-	pfmet           = cms.InputTag('pfMet'),
-	genjets         = cms.untracked.InputTag('ak5GenJets'),
+	pfmet           = cms.InputTag('patMETs'),
+	genjets         = cms.untracked.InputTag('ak5GenJetsNoNu'),
 )
 
 
-process.p = cms.Path( process.ak4*process.ak5*process.ak7*process.ak8 )
+process.p = cms.Path( process.ak7 )
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
