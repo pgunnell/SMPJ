@@ -486,7 +486,7 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
       LorentzVector tmpP4(0.0,0.0,0.0,0.0);
       qcdpfjet.setGen(tmpP4,0);
     }
-    if (qcdpfjet.pt() >= mMinPFPt)
+    if (qcdpfjet.pt() >= mMinPFPt && qcdpfjet.ptCor() >= mMinPFPt/2.)
       mPFJets.push_back(qcdpfjet);
 
        } // if(iJet->isPFJet() )

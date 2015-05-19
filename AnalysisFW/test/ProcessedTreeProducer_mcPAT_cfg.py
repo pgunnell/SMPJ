@@ -163,7 +163,6 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	## database entry for the uncertainties ######
 	PFPayloadName   = cms.string(''),
 	PFPayloadNameCHS= cms.string(''),
-	CaloPayloadName = cms.string(''),
 	jecUncSrc       = cms.string(''),
 	jecUncSrcCHS    = cms.string(''),
 	jecUncSrcNames  = cms.vstring(''),
@@ -172,14 +171,12 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	goodVtxNdof     = cms.double(4),
 	goodVtxZ        = cms.double(24),
 	## rho #######################################
-	srcCaloRho      = cms.InputTag('fixedGridRhoFastjetAll'),
-	srcPFRho        = cms.InputTag('fixedGridRhoFastjetAllCalo'),
+	srcCaloRho      = cms.InputTag('fixedGridRhoFastjetAllCalo'),
+	srcPFRho        = cms.InputTag('fixedGridRhoFastjetAll'),
 	srcPU           = cms.untracked.InputTag('addPileupInfo'),
 	## preselection cuts #########################
 	maxY            = cms.double(5.0),
 	minPFPt         = cms.double(20),
-	minPFFatPt      = cms.double(10),
-	maxPFFatEta     = cms.double(2.5),
 	minNPFJets      = cms.int32(1),
 	minGenPt        = cms.untracked.double(20),
 	minJJMass       = cms.double(-1),
@@ -193,7 +190,6 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	triggerEvent    = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
 	## jec services ##############################
 	#pfjecService    = cms.string('ak7PFL1FastL2L3Residual'),
-	#calojecService  = cms.string('ak7CaloL1FastL2L3Residual')
 )
 
 
@@ -237,7 +233,7 @@ process.ak5 = process.ak4.clone(
 )
 
 
-process.p = cms.Path( process.ak7 )
+process.p = cms.Path( process.ak5*process.ak7 )
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
