@@ -468,8 +468,8 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
 
 
     float pileupJetId = -999;
-    if ( i_pfjet->hasUserFloat("pileupJetId:fullDiscriminant") ) pileupJetId = i_pfjet->userFloat("pileupJetId:fullDiscriminant");
-    if ( i_pfjet->hasUserFloat("fullDiscriminant") ) pileupJetId = i_pfjet->userFloat("fullDiscriminant");
+    if ( i_pfjet->hasUserFloat("pileupJetId:fullDiscriminant") )    pileupJetId = i_pfjet->userFloat("pileupJetId:fullDiscriminant");
+    //if ( i_pfjet->hasUserFloat("fullDiscriminant") ) pileupJetId = i_pfjet->userFloat("fullDiscriminant");
     qcdpfjet.SetPUJetId(pileupJetId);
 //    pfjets_partonFlavour             ->push_back(i_pfjet->partonFlavour()             );
 
@@ -641,6 +641,10 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     double hof   = i_pfjetchs->hoEnergyFraction(); // Juska
     qcdpfjetchs.setVtxInfo(mpuTrk,mlvTrk,mjtTrk);
     qcdpfjetchs.setHO(hof);
+
+    float pileupJetId = -999;
+    if ( i_pfjetchs->hasUserFloat("pileupJetId:fullDiscriminant") )    pileupJetId = i_pfjetchs->userFloat("pileupJetId:fullDiscriminant");
+    qcdpfjetchs.SetPUJetId(pileupJetId);
 
     if (mIsMCarlo) {
       GenJetCollection::const_iterator i_matchedchs;

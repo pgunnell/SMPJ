@@ -2,6 +2,8 @@
 
 import FWCore.ParameterSet.Config as cms
 
+import FWCore.ParameterSet.Config as cms
+
 from RecoJets.Configuration.RecoPFJets_cff import ak4PFJets, ak4PFJetsCHS
 from RecoJets.Configuration.RecoGenJets_cff import ak4GenJets
 from RecoJets.JetProducers.SubJetParameters_cfi import SubJetParameters
@@ -12,16 +14,18 @@ from RecoJets.JetProducers.CATopJetParameters_cfi import *
 from PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff import *
 from PhysicsTools.PatAlgos.selectionLayer1.jetSelector_cfi import selectedPatJets
 from PhysicsTools.PatAlgos.tools.jetTools import *
-
 from PhysicsTools.PatAlgos.producersLayer1.metProducer_cfi import patMETs
-
 from PhysicsTools.PatAlgos.patSequences_cff import *
 from PhysicsTools.PatAlgos.tools.metTools import *
+from RecoJets.JetProducers.PileupJetID_cfi import *
+
+
 
 
 ## Modified version of jetToolBox from https://github.com/cms-jet/jetToolbox
 ## Options for PUMethod: Puppi, CS, SK, CHS
 def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
+
 	JETCorrPayload='None'
 	JETCorrLevels = [ 'None' ]
 	#JECLevels = [ 'L1Offset', 'L1FastJet', 'L1JPTOffset', 'L2Relative', 'L3Absolute', 'L5Falvour', 'L7Parton' ]
@@ -45,11 +49,18 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 	####### Toolbox start
 	#################################################################################
 
+	elemToKeep = []
 	jetSeq = cms.Sequence()
+	genParticlesLabel = ''
+	pvLabel = ''
+	tvLabel = ''
+	toolsUsed = []
 
 	proc.load('RecoJets.Configuration.GenJetParticles_cff')
 	setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) ) 
 	jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
+
+
 
 	proc.load('CommonTools.ParticleFlow.pfNoPileUpJME_cff')
 	#setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) )
@@ -78,6 +89,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 	  jetSeq += getattr(proc, jetalgo+'PFJets' )
 	  PUMethod=''
 
+
 	addJetCollection(
 			proc,
 			labelName = jetALGO+'PF'+PUMethod,
@@ -90,11 +102,23 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 			genJetCollection = cms.InputTag( jetalgo+'GenJetsNoNu'),
 			pvSource = cms.InputTag( 'offlinePrimaryVertices' ), #'offlineSlimmedPrimaryVertices'),
 			jetTrackAssociation = True,
+
+			#userFloats = cms.PSet( src = cms.VInputTag(cms.InputTag(jetALGO+"pileupJetId","fullDiscriminant"))),
 			)
-	#addJetID(proc,jetSrc = cms.InputTag( jetalgo+'PFJets'+PUMethod) , jetIdTag = 'fullDiscriminant')
+
+
+	process.load('RecoJets.JetProducers.pileupjetidproducer_cfi')
+	proc.pileupJetIdCalculator.jets = cms.InputTag(jetalgo+"PFJets"+PUMethod)
+	proc.pileupJetIdEvaluator.jets  = cms.InputTag(jetalgo+"PFJets"+PUMethod)
+	#proc.pileupJetIdCalculator.jec  = cms.string(jetalgo+"PFJets"+PUMethod.lower())
+	#proc.pileupJetIdEvaluator.jec   = cms.string(jetalgo+"PFJets"+PUMethod.lower())
+	
+	proc.patJetsAK4PFCHS.userData.userFloats.src += ['pileupJetId:fullDiscriminant']
+	#getattr(proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userFloats.src += ['pileupJetId:fullDiscriminant']  
 
 	elemToKeep += [ 'keep *_selectedPatJets'+jetALGO+'PF'+PUMethod+'_*_*' ]
 	elemToKeep += [ 'keep *_patMetsPF*_*_*' ]
+	elemToKeep +=  ['keep *_pileupJetId_*_*']
 
 	getattr(proc,'patJetPartons').particles = cms.InputTag( 'genParticles' ) #'prunedGenParticles')
 	setattr(proc, 'selectedPatJets'+jetALGO+'PF'+PUMethod, selectedPatJets.clone( src = 'patJets'+jetALGO+'PF'+PUMethod ) )
@@ -123,9 +147,9 @@ process.load('RecoJets.JetProducers.PileupJetIDParams_cfi')
 
 process.load("PhysicsTools.PatAlgos.slimming.pileupJetId_cfi")
 
-process.GlobalTag.globaltag = "PHYS14_25_V2::All"
+#process.GlobalTag.globaltag = "PHYS14_25_V2::All" #Mad
 
-
+process.GlobalTag.globaltag = "MCRUN2_74_V9A::All" #Pythia
 
 
 
@@ -134,7 +158,8 @@ process.GlobalTag.globaltag = "PHYS14_25_V2::All"
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 inFiles = cms.untracked.vstring(
-'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root'
+#'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' #Madgraph PHYS14
+'file:///mnt/storage/gflouris/2430A1EC-00FA-E411-8641-0025905A7786.root' #Pythia
 #'file:///afs/cern.ch/work/g/gflouris/public/SMPJ_AnalysisFW/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root'
    )
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(200))
@@ -142,6 +167,7 @@ process.source = cms.Source("PoolSource", fileNames = inFiles )
 
 jetToolbox( process, 'ak4', 'ak4JetSubs','CHS')
 jetToolbox( process, 'ak4', 'ak4JetSubs')
+
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #! Services
@@ -156,7 +182,6 @@ process.load("PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff")
 process.load("PhysicsTools.PatAlgos.selectionLayer1.selectedPatCandidates_cff")
 
 addMETCollection(process,'patMETPF','pfMetT1')
-
 
 process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	## jet collections ###########################
@@ -190,7 +215,9 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	## trigger ###################################
 	printTriggerMenu = cms.untracked.bool(True),
 	processName     = cms.string('HLT'),
-	triggerName     = cms.vstring('HLT_PFJet260_v1'),
+	triggerName     = cms.vstring('HLT_PFJet40_v1','HLT_PFJet60_v1', 'HLT_PFJet80_v1', 'HLT_PFJet140_v1', 'HLT_PFJet200_v1', 'HLT_PFJet260_v1', 
+				      'HLT_PFJet320_v1', 'HLT_PFJet400_v1', 'HLT_PFJet450_v1', 'HLT_PFJet500_v1'
+				      ),
 	triggerResults  = cms.InputTag("TriggerResults","","HLT"),
 	triggerEvent    = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
 	## jec services ##############################
@@ -238,7 +265,7 @@ process.ak5 = process.ak4.clone(
 )
 
 
-process.p = cms.Path( process.ak5*process.ak7 )
+process.p = cms.Path( process.ak4*process.ak5*process.ak7*process.ak8 )
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
