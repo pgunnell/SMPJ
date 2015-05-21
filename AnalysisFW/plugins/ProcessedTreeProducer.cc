@@ -465,6 +465,16 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     qcdpfjet.setVtxInfo(mpuTrk,mlvTrk,mjtTrk);
     qcdpfjet.setHO(hof);
 
+
+
+    float pileupJetId = -999;
+    if ( i_pfjet->hasUserFloat("pileupJetId:fullDiscriminant") ) pileupJetId = i_pfjet->userFloat("pileupJetId:fullDiscriminant");
+    if ( i_pfjet->hasUserFloat("fullDiscriminant") ) pileupJetId = i_pfjet->userFloat("fullDiscriminant");
+    qcdpfjet.SetPUJetId(pileupJetId);
+//    pfjets_partonFlavour             ->push_back(i_pfjet->partonFlavour()             );
+
+
+
     if (mIsMCarlo) {
       GenJetCollection::const_iterator i_matched;
       float rmin(999);
@@ -488,6 +498,8 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     }
     if (qcdpfjet.pt() >= mMinPFPt && qcdpfjet.ptCor() >= mMinPFPt/2.)
       mPFJets.push_back(qcdpfjet);
+
+
 
        } // if(iJet->isPFJet() )
     } // --- end of non chs patjet iterator loop -------------------- //

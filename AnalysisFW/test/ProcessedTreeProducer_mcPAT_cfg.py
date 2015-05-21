@@ -11,7 +11,8 @@ from RecoJets.JetProducers.AnomalousCellParameters_cfi import *
 from RecoJets.JetProducers.CATopJetParameters_cfi import *
 from PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff import *
 from PhysicsTools.PatAlgos.selectionLayer1.jetSelector_cfi import selectedPatJets
-from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection
+from PhysicsTools.PatAlgos.tools.jetTools import *
+
 from PhysicsTools.PatAlgos.producersLayer1.metProducer_cfi import patMETs
 
 from PhysicsTools.PatAlgos.patSequences_cff import *
@@ -89,8 +90,9 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 			genJetCollection = cms.InputTag( jetalgo+'GenJetsNoNu'),
 			pvSource = cms.InputTag( 'offlinePrimaryVertices' ), #'offlineSlimmedPrimaryVertices'),
 			jetTrackAssociation = True,
-
 			)
+	#addJetID(proc,jetSrc = cms.InputTag( jetalgo+'PFJets'+PUMethod) , jetIdTag = 'fullDiscriminant')
+
 	elemToKeep += [ 'keep *_selectedPatJets'+jetALGO+'PF'+PUMethod+'_*_*' ]
 	elemToKeep += [ 'keep *_patMetsPF*_*_*' ]
 
@@ -117,6 +119,9 @@ process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('RecoJets.Configuration.GenJetParticles_cff')
 process.load('RecoJets.Configuration.RecoGenJets_cff')
 process.load('RecoJets.JetProducers.TrackJetParameters_cfi')
+process.load('RecoJets.JetProducers.PileupJetIDParams_cfi')
+
+process.load("PhysicsTools.PatAlgos.slimming.pileupJetId_cfi")
 
 process.GlobalTag.globaltag = "PHYS14_25_V2::All"
 

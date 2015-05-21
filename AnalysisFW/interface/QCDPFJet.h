@@ -22,21 +22,22 @@ class QCDPFJet : public QCDJet {
      void setHFMulti(int fhf_hm, int fhf_phm) {hf_hm_ = fhf_hm; hf_phm_ = fhf_phm;}
      void setVtxInfo(int mpuTrk, int mlvTrk, int mjtTrk) { mpuTrk_ = mpuTrk; mlvTrk_ = mlvTrk; mjtTrk_ = mjtTrk;} // Juska
      void setHO(float hof) {hof_ = hof;} // Juska
+     void SetPUJetId(float pujid) { pujid_ = pujid; }
     /*
      void setPFParticles(std::vector<LorentzVector>& fpfFParticles) {
       for(unsigned i=0; i<fpfFParticles.size(); i++)
        {
         pfParticles_.push_back(fpfFParticles[i]);
       }
-     } // setPFParticles  
+     } // setPFParticles
      */
 
-     //------------ Get methods ------------------------------ 
-     float beta()     const {return beta_;}                
+     //------------ Get methods ------------------------------
+     float beta()     const {return beta_;}
      float betaStar() const {return betaStar_;}
-     float chf()      const {return chf_;} 
+     float chf()      const {return chf_;}
      float nhf()      const {return nhf_;}
-     float nemf()      const {return nemf_;} 
+     float nemf()      const {return nemf_;}
      float cemf()      const {return cemf_;}
      float muf()      const {return muf_;}
      float hf_hf()    const {return hf_hf_;}
@@ -51,12 +52,14 @@ class QCDPFJet : public QCDJet {
      int ncand()      const {return ncand_;}
  //    int nParticles() const {return pfParticles_.size();}
  //    const LorentzVector& getPFParticles(int i) const {return pfParticles_[i];}
- 
+
      int mpuTrk()     const {return mpuTrk_;} // Juska
      int mlvTrk()     const {return mlvTrk_;} //
      int mjtTrk()     const {return mjtTrk_;} //
      float hof()      const {return hof_;}    //
-     
+
+     float PUJetId()  const { return pujid_ ;}
+
 
    private:
      //---- charged hadron energy fraction ----
@@ -92,8 +95,8 @@ class QCDPFJet : public QCDJet {
      //---- fraction of track pt coming from the signal vertex ---
      float beta_;
      //---- fraction of track pt NOT coming from the signal vertex ---
-     float betaStar_;  
-     //----- PF Particles ----// 
+     float betaStar_;
+     //----- PF Particles ----//
 //     std::vector<LorentzVector> pfParticles_;
 
      // Juska:
@@ -101,6 +104,8 @@ class QCDPFJet : public QCDJet {
      int mlvTrk_; // lead vertex tracks in jet
      int mjtTrk_; // all tracks in jet (also unassociated)
      float hof_; // Hadronic Outer energy fraction
-     
+
+     float pujid_;
+
     };
 #endif
