@@ -10,15 +10,13 @@ from RecoJets.JetProducers.SubJetParameters_cfi import SubJetParameters
 from RecoJets.JetProducers.PFJetParameters_cfi import *
 from RecoJets.JetProducers.GenJetParameters_cfi import *
 from RecoJets.JetProducers.AnomalousCellParameters_cfi import *
-from RecoJets.JetProducers.CATopJetParameters_cfi import *
 from PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff import *
 from PhysicsTools.PatAlgos.selectionLayer1.jetSelector_cfi import selectedPatJets
 from PhysicsTools.PatAlgos.tools.jetTools import *
 from PhysicsTools.PatAlgos.producersLayer1.metProducer_cfi import patMETs
 from PhysicsTools.PatAlgos.patSequences_cff import *
 from PhysicsTools.PatAlgos.tools.metTools import *
-from RecoJets.JetProducers.PileupJetID_cfi import *
-
+from RecoJets.JetProducers.pileupjetidproducer_cfi import *
 
 
 
@@ -60,11 +58,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 	setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) ) 
 	jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
 
-
-
 	proc.load('CommonTools.ParticleFlow.pfNoPileUpJME_cff')
-	#setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) )
-	#jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
 	####  Creating PATjets
 	if( PUMethod=='CHS') :
 	  setattr( proc, jetalgo+'PFJetsCHS', ak4PFJets.clone( rParam = jetSize, jetAlgorithm = algorithm ) )
@@ -103,22 +97,27 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod=''):
 			pvSource = cms.InputTag( 'offlinePrimaryVertices' ), #'offlineSlimmedPrimaryVertices'),
 			jetTrackAssociation = True,
 
-			#userFloats = cms.PSet( src = cms.VInputTag(cms.InputTag(jetALGO+"pileupJetId","fullDiscriminant"))),
 			)
 
+	setattr( proc, jetALGO+'PF'+PUMethod+'pileupJetIdCalculator',
+			pileupJetIdCalculator.clone(
+				jets = cms.InputTag(jetalgo+'PFJets'+PUMethod),
+				rho = cms.InputTag("fixedGridRhoFastjetAll"),
+				vertexes = cms.InputTag('offlinePrimaryVertices')
 
-	process.load('RecoJets.JetProducers.pileupjetidproducer_cfi')
-	proc.pileupJetIdCalculator.jets = cms.InputTag(jetalgo+"PFJets"+PUMethod)
-	proc.pileupJetIdEvaluator.jets  = cms.InputTag(jetalgo+"PFJets"+PUMethod)
-	#proc.pileupJetIdCalculator.jec  = cms.string(jetalgo+"PFJets"+PUMethod.lower())
-	#proc.pileupJetIdEvaluator.jec   = cms.string(jetalgo+"PFJets"+PUMethod.lower())
-	
-	proc.patJetsAK4PFCHS.userData.userFloats.src += ['pileupJetId:fullDiscriminant']
-	#getattr(proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userFloats.src += ['pileupJetId:fullDiscriminant']  
+				))
 
-	elemToKeep += [ 'keep *_selectedPatJets'+jetALGO+'PF'+PUMethod+'_*_*' ]
-	elemToKeep += [ 'keep *_patMetsPF*_*_*' ]
-	elemToKeep +=  ['keep *_pileupJetId_*_*']
+	setattr( proc, jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator',
+			pileupJetIdEvaluator.clone(
+				jetids = cms.InputTag(jetALGO+'PF'+PUMethod+'pileupJetIdCalculator'),
+				jets = cms.InputTag(jetalgo+'PFJets'+PUMethod),
+				rho = cms.InputTag("fixedGridRhoFastjetAll"),
+				vertexes = cms.InputTag('offlinePrimaryVertices')
+				)
+			)
+
+	getattr( proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userFloats.src += [jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:fullDiscriminant']
+	getattr( proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userInts.src += [jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:cutbasedId',jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:fullId']
 
 	getattr(proc,'patJetPartons').particles = cms.InputTag( 'genParticles' ) #'prunedGenParticles')
 	setattr(proc, 'selectedPatJets'+jetALGO+'PF'+PUMethod, selectedPatJets.clone( src = 'patJets'+jetALGO+'PF'+PUMethod ) )
@@ -159,14 +158,15 @@ process.GlobalTag.globaltag = "MCRUN2_74_V9A::All" #Pythia
 
 inFiles = cms.untracked.vstring(
 #'file:///mnt/storage/gflouris/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root' #Madgraph PHYS14
-'file:///mnt/storage/gflouris/2430A1EC-00FA-E411-8641-0025905A7786.root' #Pythia
+'file://./2430A1EC-00FA-E411-8641-0025905A7786.root' #Pythia
 #'file:///afs/cern.ch/work/g/gflouris/public/SMPJ_AnalysisFW/08C07BB6-376F-E411-BE9F-C4346BC7EE18.root'
    )
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(200))
 process.source = cms.Source("PoolSource", fileNames = inFiles )
 
-jetToolbox( process, 'ak4', 'ak4JetSubs','CHS')
+
 jetToolbox( process, 'ak4', 'ak4JetSubs')
+jetToolbox( process, 'ak4', 'ak4JetSubs','CHS')
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -187,6 +187,8 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducer',
 	## jet collections ###########################
 	pfjets          = cms.InputTag('selectedPatJetsAK4PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK4PFCHS'),
+	pfpujetid       = cms.string('AK4PFpileupJetIdEvaluator:fullDiscriminant'),
+	pfchsjetpuid    = cms.string('AK4PFCHSpileupJetIdEvaluator:fullDiscriminant'),
 	## MET collection ####
 	pfmet           = cms.InputTag('patMETs'),
 	genjets         = cms.untracked.InputTag('ak4GenJetsNoNu'),
@@ -231,6 +233,9 @@ jetToolbox( process, 'ak8', 'ak8JetSubs')
 process.ak8 = process.ak4.clone(
 	pfjets          = cms.InputTag('selectedPatJetsAK8PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK8PFCHS'),
+	pfpujetid       = cms.string('AK8PFpileupJetIdEvaluator:fullDiscriminant'),
+	pfchsjetpuid    = cms.string('AK8PFCHSpileupJetIdEvaluator:fullDiscriminant'),
+
 	## MET collection ####
 	pfmet           = cms.InputTag('patMETs'),
 	genjets         = cms.untracked.InputTag('ak8GenJets'),
@@ -245,6 +250,9 @@ process.ak7GenJets.rParam = cms.double(0.7)
 process.ak7 = process.ak4.clone(
 	pfjets          = cms.InputTag('selectedPatJetsAK7PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK7PFCHS'),
+	pfpujetid       = cms.string('AK7PFpileupJetIdEvaluator:fullDiscriminant'),
+	pfchsjetpuid    = cms.string('AK7PFCHSpileupJetIdEvaluator:fullDiscriminant'),
+
 	## MET collection ####
 	pfmet           = cms.InputTag('patMETs'),
 	genjets         = cms.untracked.InputTag('ak7GenJetsNoNu'),
@@ -259,12 +267,14 @@ process.ak5GenJets.rParam = cms.double(0.5)
 process.ak5 = process.ak4.clone(
 	pfjets          = cms.InputTag('selectedPatJetsAK5PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK5PFCHS'),
+	pfpujetid       = cms.string('AK5PFpileupJetIdEvaluator:fullDiscriminant'),
+	pfchsjetpuid    = cms.string('AK5PFCHSpileupJetIdEvaluator:fullDiscriminant'),
 	## MET collection ####
 	pfmet           = cms.InputTag('patMETs'),
 	genjets         = cms.untracked.InputTag('ak5GenJetsNoNu'),
 )
 
-
+#Try scheduled processs
 process.p = cms.Path( process.ak4*process.ak5*process.ak7*process.ak8 )
 
 

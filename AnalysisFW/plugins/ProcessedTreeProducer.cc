@@ -48,6 +48,9 @@ ProcessedTreeProducer::ProcessedTreeProducer(edm::ParameterSet const& cfg)
 //  mPFJECservice      = cfg.getParameter<std::string>               ("pfjecService");
   mPFPayloadName     = cfg.getParameter<std::string>               ("PFPayloadName");
   mPFPayloadNameCHS  = cfg.getParameter<std::string>               ("PFPayloadNameCHS");
+  	pfpujetid       = cfg.getParameter<std::string>               ("pfpujetid");
+	pfchsjetpuid    = cfg.getParameter<std::string>               ("pfchsjetpuid");
+
   mGoodVtxNdof       = cfg.getParameter<double>                    ("goodVtxNdof");
   mGoodVtxZ          = cfg.getParameter<double>                    ("goodVtxZ");
   mMinPFPt           = cfg.getParameter<double>                    ("minPFPt");
@@ -318,7 +321,7 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
 
   //---------------- Jets ---------------------------------------------
   //mPFJEC   = JetCorrector::getJetCorrector(mPFJECservice,iSetup);
-
+ //event.getByToken(mvaFullPUDiscriminantToken_ ,puJetIdMva);
   edm::ESHandle<JetCorrectorParametersCollection> PFJetCorParColl;
   if (mPFPayloadName != "" && !isPFJecUncSet_){
     iSetup.get<JetCorrectionsRecord>().get(mPFPayloadName,PFJetCorParColl);
@@ -465,15 +468,9 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     qcdpfjet.setVtxInfo(mpuTrk,mlvTrk,mjtTrk);
     qcdpfjet.setHO(hof);
 
-
-
     float pileupJetId = -999;
-    if ( i_pfjet->hasUserFloat("pileupJetId:fullDiscriminant") )    pileupJetId = i_pfjet->userFloat("pileupJetId:fullDiscriminant");
-    //if ( i_pfjet->hasUserFloat("fullDiscriminant") ) pileupJetId = i_pfjet->userFloat("fullDiscriminant");
+    if ( i_pfjet->hasUserFloat(pfpujetid) )    pileupJetId = i_pfjet->userFloat(pfpujetid);
     qcdpfjet.SetPUJetId(pileupJetId);
-//    pfjets_partonFlavour             ->push_back(i_pfjet->partonFlavour()             );
-
-
 
     if (mIsMCarlo) {
       GenJetCollection::const_iterator i_matched;
@@ -643,7 +640,7 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     qcdpfjetchs.setHO(hof);
 
     float pileupJetId = -999;
-    if ( i_pfjetchs->hasUserFloat("pileupJetId:fullDiscriminant") )    pileupJetId = i_pfjetchs->userFloat("pileupJetId:fullDiscriminant");
+    if ( i_pfjetchs->hasUserFloat(pfchsjetpuid) )   {  pileupJetId = i_pfjetchs->userFloat(pfchsjetpuid);}
     qcdpfjetchs.SetPUJetId(pileupJetId);
 
     if (mIsMCarlo) {

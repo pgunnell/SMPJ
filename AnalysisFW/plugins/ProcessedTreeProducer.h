@@ -52,6 +52,9 @@ class ProcessedTreeProducer : public edm::EDAnalyzer
     std::string mPFJECservice;
     std::string mPFPayloadName;
     std::string mPFPayloadNameCHS;
+    std::string pfpujetid;
+	std::string pfchsjetpuid;
+
     // unc file for non CHS jet ---- //
     std::string mPFJECUncSrc;
     // unc file for CHS jet ---- //
@@ -68,7 +71,6 @@ class ProcessedTreeProducer : public edm::EDAnalyzer
     edm::InputTag mSrcPU;
     //edm::InputTag mPFMET;
     edm::EDGetTokenT<pat::METCollection> mPFMET;
-
     //edm::InputTag mHBHENoiseFilter;
     //---- TRIGGER -------------------------
     std::string   processName_;
