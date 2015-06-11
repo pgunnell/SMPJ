@@ -40,8 +40,15 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
+#include "DataFormats/L1Trigger/interface/L1JetParticle.h"
+
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
@@ -49,10 +56,16 @@
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 
-ProcessedTreeProducer_miniAOD::ProcessedTreeProducer_miniAOD(edm::ParameterSet const& cfg)
-{
+ProcessedTreeProducer_miniAOD::ProcessedTreeProducer_miniAOD(edm::ParameterSet const& cfg)//:
+  //triggerBits_(consumes<edm::TriggerResults>(cfg.getParameter<edm::InputTag>("bits"))),
+  //triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(cfg.getParameter<edm::InputTag>("objects"))),
+  //triggerPrescales_(consumes<pat::PackedTriggerPrescales>(cfg.getParameter<edm::InputTag>("prescales")))
+ {
 //  mPFJECservice      = cfg.getParameter<std::string>               ("pfjecService");
 //  mCaloJECservice    = cfg.getParameter<std::string>               ("calojecService");
+  
+
+
   mPFPayloadName     = cfg.getParameter<std::string>               ("PFPayloadName");
   mPFPayloadNameCHS  = cfg.getParameter<std::string>               ("PFPayloadNameCHS");
   mCaloPayloadName   = cfg.getParameter<std::string>               ("CaloPayloadName");
@@ -84,6 +97,13 @@ ProcessedTreeProducer_miniAOD::ProcessedTreeProducer_miniAOD(edm::ParameterSet c
   mPFJECUncSrc       = cfg.getParameter<std::string>               ("jecUncSrc");
   mPFJECUncSrcCHS    = cfg.getParameter<std::string>               ("jecUncSrcCHS");
   mPFJECUncSrcNames  = cfg.getParameter<std::vector<std::string> > ("jecUncSrcNames");
+  
+  cenJetLabel_   = cfg.getParameter<std::string>             ("cenJetLabel");
+  forwJetLabel_   = cfg.getParameter<std::string>             ("forwJetLabel");
+
+  triggerBits_ = cfg.getParameter<edm::InputTag>("triggerResults");
+  triggerObjects_  = cfg.getParameter<std::vector<std::string> > ("triggerObjects");
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void ProcessedTreeProducer_miniAOD::beginJob()
@@ -93,8 +113,9 @@ void ProcessedTreeProducer_miniAOD::beginJob()
   mTree->Branch("events","QCDEvent",&mEvent);
   mTriggerNamesHisto = fs->make<TH1F>("TriggerNames","TriggerNames",1,0,1);
   mTriggerNamesHisto->SetBit(TH1::kCanRebin);
-  for(unsigned i=0;i<triggerNames_.size();i++)
-    mTriggerNamesHisto->Fill(triggerNames_[i].c_str(),1);
+  
+  //for(unsigned i=0;i<triggerNames_.size();i++)
+  //mTriggerNamesHisto->Fill(triggerNames_[i].c_str(),1);
   mTriggerPassHisto = fs->make<TH1F>("TriggerPass","TriggerPass",1,0,1);
   mTriggerPassHisto->SetBit(TH1::kCanRebin);
   isPFJecUncSet_ = false;
@@ -104,6 +125,7 @@ void ProcessedTreeProducer_miniAOD::beginJob()
 //////////////////////////////////////////////////////////////////////////////////////////
 void ProcessedTreeProducer_miniAOD::endJob()
 {
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void ProcessedTreeProducer_miniAOD::beginRun(edm::Run const & iRun, edm::EventSetup const& iSetup)
@@ -143,7 +165,6 @@ void ProcessedTreeProducer_miniAOD::analyze(edm::Event const& event, edm::EventS
   QCDEventHdr mEvtHdr;
   QCDMET mCaloMet,mPFMet;
 
-
   //-------------- Basic Event Info ------------------------------
   mEvtHdr.setRun(event.id().run());
   mEvtHdr.setEvt(event.id().event());
@@ -157,22 +178,129 @@ void ProcessedTreeProducer_miniAOD::analyze(edm::Event const& event, edm::EventS
   else
     mEvtHdr.setBS(-999,-999,-999);
 
-
   //-------------- HCAL Noise Summary -----------------------------
   Handle<bool> noiseSummary;
- /* if (!mIsMCarlo) {
-   // event.getByLabel(mHBHENoiseFilter,noiseSummary);
-   event.getByLabel(edm::InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"), noiseSummary);
-    mEvtHdr.setHCALNoise(*noiseSummary);
+  /* if (!mIsMCarlo) {
+  // event.getByLabel(mHBHENoiseFilter,noiseSummary);
+  event.getByLabel(edm::InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"), noiseSummary);
+  mEvtHdr.setHCALNoise(*noiseSummary);
   }
   else */
-    mEvtHdr.setHCALNoise(true);
-
-
-
-
+  mEvtHdr.setHCALNoise(true);
+  
   //-------------- Trigger Info -----------------------------------
-  event.getByLabel(triggerResultsTag_,triggerResultsHandle_);
+  edm::Handle<edm::TriggerResults> triggerBits;
+  edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
+  edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
+  
+  event.getByLabel(triggerBits_, triggerBits);
+  event.getByLabel("selectedPatTrigger", triggerObjects);
+  event.getByLabel("patTrigger", triggerPrescales);
+
+  
+  //Variables
+  vector<int> L1Prescales,HLTPrescales,Fired;                                                                                                                          
+  vector<vector<LorentzVector> > mL1Objects,mHLTObjects;  
+  vector<LorentzVector> vvL1,vvHLT;
+
+  const edm::TriggerNames &names = event.triggerNames(*triggerBits);
+  //std::cout << "\n === TRIGGER PATHS === " << std::endl;
+  for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
+    //std::cout << "Trigger " << names.triggerName(i) << 
+    //  ", prescale " << triggerPrescales->getPrescaleForIndex(i) <<
+    //  ": " << (triggerBits->accept(i) ? "PASS" : "fail (or not run)") 
+    //	      << std::endl;
+    
+    L1Prescales.push_back(triggerPrescales->getPrescaleForIndex(i));
+    HLTPrescales.push_back(triggerPrescales->getPrescaleForIndex(i));
+    
+    //if(names.triggerName(i)=="HLT_PFJet260_v1"){
+    if(triggerBits->accept(i)) Fired.push_back(1);
+    if(!triggerBits->accept(i)) Fired.push_back(0);
+    //}
+
+    mTriggerNamesHisto->Fill(names.triggerName(i).c_str(),1);    
+    
+    if(triggerBits->accept(i)) mTriggerPassHisto->Fill(names.triggerName(i).c_str(),1);
+
+  }
+  
+  //std::cout << "\n === TRIGGER OBJECTS === " << std::endl;
+  for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
+
+    obj.unpackPathNames(names);
+    
+    //if(obj.hasPathName("HLT_PFJet260_v1", true, true )){
+
+      std::cout << "\t   Collection: " << obj.collection() << std::endl;                                                                                                    
+      std::cout << "\t   Type IDs:   ";                                                                                                                                     
+      for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;                                                                          
+      std::cout << std::endl;   
+      for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
+
+      for(size_t i=0;i<triggerObjects_.size();i++){    
+	
+	cout<<i<<endl;
+	cout<<obj.pt()<<endl;
+	TLorentzVector P4;                                                                                                                                         
+	P4.SetPtEtaPhiM(obj.pt(),obj.eta(),obj.phi(),obj.mass());                                                                                                      
+	LorentzVector qcdhltobj(P4.Px(),P4.Py(),P4.Pz(),P4.E());                                                                                                   
+	vvHLT.push_back(qcdhltobj);
+      }
+
+      std::vector<std::string> pathNamesAll  = obj.pathNames(false);
+      std::vector<std::string> pathNamesLast = obj.pathNames(true);
+
+      //}
+    // Print trigger object collection and type
+
+    //std::cout << "\t   Collection: " << obj.collection() << std::endl;
+    //std::cout << "\t   Type IDs:   ";
+    //for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;
+    //std::cout << std::endl;
+    // Print associated trigger filters
+    //std::cout << "\t   Filters:    ";
+    //for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
+    //std::cout << std::endl;
+    //std::vector<std::string> pathNamesAll  = obj.pathNames(false);
+    //std::vector<std::string> pathNamesLast = obj.pathNames(true);
+    // Print all trigger paths, for each one record also if the object is associated to a 'l3' filter (always true for the
+    // definition used in the PAT trigger producer) and if it's associated to the last filter of a successfull path (which
+    // means that this object did cause this trigger to succeed; however, it doesn't work on some multi-object triggers)
+    //std::cout << "\t   Paths (" << pathNamesAll.size()<<"/"<<pathNamesLast.size()<<"):    ";
+      
+    mHLTObjects.push_back(vvHLT); 
+  }
+  //std::cout << std::endl;  
+
+  vector<LorentzVector>      L1jetparticleCentral;
+  vector<LorentzVector>      L1jetparticleForward;
+  
+  edm::Handle<edm::View<l1extra::L1JetParticle> > L1JetCollectionCentral;
+  event.getByLabel(cenJetLabel_,L1JetCollectionCentral);
+
+  edm::Handle<edm::View<l1extra::L1JetParticle> > L1JetCollectionForward;
+  event.getByLabel(forwJetLabel_,L1JetCollectionForward);
+
+  for(edm::View<l1extra::L1JetParticle>::const_iterator l1jetpart=L1JetCollectionCentral->begin(); l1jetpart!=L1JetCollectionCentral->end(); ++l1jetpart)
+    {
+      L1jetparticleCentral.push_back(l1jetpart->p4());
+      mL1Objects.push_back(L1jetparticleCentral);
+    }
+
+  for(edm::View<l1extra::L1JetParticle>::const_iterator l1jetpart=L1JetCollectionForward->begin(); l1jetpart!=L1JetCollectionForward->end(); ++l1jetpart)
+    {
+      L1jetparticleForward.push_back(l1jetpart->p4());
+      mL1Objects.push_back(L1jetparticleForward);                                                                                                                      
+    }
+
+  //loop over trigger names  
+  mEvent->setTrigDecision(Fired);  
+  mEvent->setPrescales(L1Prescales,HLTPrescales);
+  mEvent->setL1Obj(mL1Objects);
+  mEvent->setHLTObj(mHLTObjects);
+
+  /*event.getByLabel(triggerResultsTag_,triggerResultsHandle_);
   if (!triggerResultsHandle_.isValid()) {
     cout << "ProcessedTreeProducer_miniAOD::analyze: Error in getting TriggerResults product from Event!" << endl;
     //return;
@@ -251,12 +379,12 @@ void ProcessedTreeProducer_miniAOD::analyze(edm::Event const& event, edm::EventS
     HLTPrescales.push_back(preHLT);
     mL1Objects.push_back(vvL1);
     mHLTObjects.push_back(vvHLT);
-  }// loop over trigger names
-  mEvent->setTrigDecision(Fired);
+    }// loop over trigger names*/
+
+  /*mEvent->setTrigDecision(Fired);
   mEvent->setPrescales(L1Prescales,HLTPrescales);
   mEvent->setL1Obj(mL1Objects);
-  mEvent->setHLTObj(mHLTObjects);
-
+  mEvent->setHLTObj(mHLTObjects);*/
 
   //-------------- Vertex Info -----------------------------------
   Handle<reco::VertexCollection> recVtxs;

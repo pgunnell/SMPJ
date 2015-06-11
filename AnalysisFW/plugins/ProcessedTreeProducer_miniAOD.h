@@ -22,6 +22,20 @@
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 
+#include "DataFormats/L1Trigger/interface/L1JetParticle.h"
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+
+#include "DataFormats/Math/interface/deltaR.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
+
 using namespace edm;
 using namespace reco;
 using namespace std;
@@ -45,6 +59,14 @@ class ProcessedTreeProducer_miniAOD : public edm::EDAnalyzer
     static bool sort_pfjets(QCDPFJet j1, QCDPFJet j2) {
       return j1.ptCor() > j2.ptCor();
     }
+
+    //edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
+    //edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
+    //edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
+
+    std::vector<std::string> triggerObjects_;
+    std::vector<unsigned int> triggerPrescales_;
+
     //---- configurable parameters --------
     //bool   mEventInfo;
     bool   mIsMCarlo;
@@ -76,8 +98,12 @@ class ProcessedTreeProducer_miniAOD : public edm::EDAnalyzer
     edm::InputTag mSrcCaloRho;
     edm::InputTag mSrcPFRho;
     edm::InputTag mSrcPU;
+
+    edm::InputTag triggerBits_;
+
     //edm::InputTag mPFMET;
     edm::EDGetTokenT<pat::METCollection> mPFMET;
+
     //edm::InputTag mHBHENoiseFilter;
     //---- TRIGGER -------------------------
     std::string   processName_;
@@ -87,6 +113,9 @@ class ProcessedTreeProducer_miniAOD : public edm::EDAnalyzer
     edm::InputTag triggerEventTag_;
     edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
     edm::Handle<trigger::TriggerEvent> triggerEventHandle_;
+    edm::InputTag cenJetLabel_;
+    edm::InputTag forwJetLabel_;
+
     HLTConfigProvider hltConfig_;
     //---- CORRECTORS ----------------------
     const JetCorrector *mPFJEC;
