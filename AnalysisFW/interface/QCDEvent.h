@@ -5,7 +5,7 @@
 #define QCDEvent_h
 #include "SMPJ/AnalysisFW/interface/QCDJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDMET.h"
-//#include "SMPJ/AnalysisFW/interface/QCDCaloJet.h"
+#include "SMPJ/AnalysisFW/interface/QCDCaloJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDPFJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDEventHdr.h"
 #include "DataFormats/JetReco/interface/Jet.h"
@@ -20,10 +20,10 @@ class QCDEvent
       //------------ Destructor -------------------------------
       ~QCDEvent();
       //------------ Set methods ------------------------------
-      //void setCaloMET(const QCDMET& fCaloMET)                     {CaloMet_ = fCaloMET;}
+      void setCaloMET(const QCDMET& fCaloMET)                     {CaloMet_ = fCaloMET;}
       void setPFMET(const QCDMET& fPFMET)                         {PFMet_ = fPFMET;}
       void setEvtHdr(const QCDEventHdr& fEvtHdr)                  {EvtHdr_ = fEvtHdr;}
-      //void setCaloJets(const std::vector<QCDCaloJet>& fCaloJets);
+      void setCaloJets(const std::vector<QCDCaloJet>& fCaloJets);
       void setPFJets(const std::vector<QCDPFJet>& fPFJets);
       void setPFJetsCHS(const std::vector<QCDPFJet>& fPFJetsCHS);
       //void setFatJets(const std::vector<QCDJet>& fFatJets);
@@ -39,7 +39,7 @@ class QCDEvent
       unsigned int nPFJets()                           const {return PFJets_.size();}
       unsigned int nPFJetsCHS()                        const {return PFJetsCHS_.size();}
       //unsigned int nFatJets()                          const {return FatJets_.size();}
-      //unsigned int nCaloJets()                         const {return CaloJets_.size();}
+      unsigned int nCaloJets()                         const {return CaloJets_.size();}
       unsigned int nGenJets()                          const {return GenJets_.size();}
       int nGoodJets(int unc, int id, float ymax, float ptmin, std::vector<QCDJet> jets);
       int fired(int i)                                 const {return TriggerDecision_[i];}
@@ -47,17 +47,17 @@ class QCDEvent
       int preHLT(int i)                                const {return HLTPrescale_[i];}
       float pfmjj();
 
-      //float calomjj();
+      float calomjj();
       float genmjj();
       float pfchsmjjcor(int unc);
       float pfchsmjjcor(int unc,int src);
       float pfmjjcor(int unc);
       float pfmjjcor(int unc,int src);
       //float fatmjjcor(int unc);
-      //float calomjjcor(int unc);
+      float calomjjcor(int unc);
       float pfmjjgen();
-      //float calomjjgen();
-      //const QCDMET&        calomet()                   const {return CaloMet_;}
+      float calomjjgen();
+      const QCDMET&        calomet()                   const {return CaloMet_;}
       const QCDMET&        pfmet()                     const {return PFMet_;}
       const LorentzVector& hltobj(int itrig, int iobj) const {return (HLTObj_[itrig])[iobj];}
       const LorentzVector& l1obj(int itrig, int iobj)  const {return (L1Obj_[itrig])[iobj];}
@@ -65,14 +65,14 @@ class QCDEvent
       const QCDPFJet&      pfjet(int i)                const {return PFJets_[i];}
       const QCDPFJet&      pfjetchs(int i)             const {return PFJetsCHS_[i];}
       //const QCDJet&        fatjet(int i)               const {return FatJets_[i];}
-      //const QCDCaloJet&    calojet(int i)              const {return CaloJets_[i];}
+      const QCDCaloJet&    calojet(int i)              const {return CaloJets_[i];}
       const QCDEventHdr&   evtHdr()                    const {return EvtHdr_;}
 
     private:
       //---- event header (contains all the event info) --------------
       QCDEventHdr                              EvtHdr_;
       //---- CALO met object -----------------------------------------
-      //QCDMET                                   CaloMet_;
+      QCDMET                                   CaloMet_;
       //---- PF met object -------------------------------------------
       QCDMET                                   PFMet_;
       //---- trigger decision vector ---------------------------------
@@ -88,7 +88,7 @@ class QCDEvent
       //---- Genjets -------------------------------------------------
       std::vector<LorentzVector>               GenJets_;
       //---- CaloJets ------------------------------------------------
-      //std::vector<QCDCaloJet>                  CaloJets_;
+      std::vector<QCDCaloJet>                  CaloJets_;
       //---- PFJets --------------------------------------------------
       std::vector<QCDPFJet>                    PFJets_;
       //---- PFJetsCHS -----------------------------------------------
