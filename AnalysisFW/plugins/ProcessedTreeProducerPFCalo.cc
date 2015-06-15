@@ -307,8 +307,8 @@ void ProcessedTreeProducerPFCalo::analyze(edm::Event const& event, edm::EventSet
 //    mEvtHdr.setTrPu(0);
   }
   //---------------- Jets ---------------------------------------------
-  mPFJEC   = JetCorrector::getJetCorrector(mPFJECservice,iSetup);
-  mCALOJEC = JetCorrector::getJetCorrector(mCaloJECservice,iSetup);
+  //mPFJEC   = JetCorrector::getJetCorrector(mPFJECservice,iSetup);
+  //mCALOJEC = JetCorrector::getJetCorrector(mCaloJECservice,iSetup);
   edm::ESHandle<JetCorrectorParametersCollection> PFJetCorParColl;
   if (mPFPayloadName != "" && !isPFJecUncSet_){
     iSetup.get<JetCorrectionsRecord>().get(mPFPayloadName,PFJetCorParColl);
@@ -352,7 +352,7 @@ void ProcessedTreeProducerPFCalo::analyze(edm::Event const& event, edm::EventSet
     QCDPFJet qcdpfjet;
     //int index = i_pfjet-pfjets->begin();
     //edm::RefToBase<reco::Jet> pfjetRef(edm::Ref<PFJetCollection>(pfjets,index));
-    double scale = mPFJEC->correction(*i_pfjet,event,iSetup);
+    //double scale = mPFJEC->correction(*i_pfjet,event,iSetup);
     //---- preselection -----------------
     if (fabs(i_pfjet->y()) > mMaxY) continue;
     //---- vertex association -----------
@@ -391,25 +391,25 @@ void ProcessedTreeProducerPFCalo::analyze(edm::Event const& event, edm::EventSet
     qcdpfjet.setBeta(beta);
     qcdpfjet.setBetaStar(betaStar);
     //---- jec uncertainty --------------
-    double unc(0.0);
-    vector<float> uncSrc(0);
-    if (mPFPayloadName != "") {
-      mPFUnc->setJetEta(i_pfjet->eta());
-      mPFUnc->setJetPt(scale * i_pfjet->pt());
-      unc = mPFUnc->getUncertainty(true);
-    }
-    if (mPFJECUncSrc != "") {
-      for(unsigned isrc=0;isrc<mPFJECUncSrcNames.size();isrc++) {
-        mPFUncSrc[isrc]->setJetEta(i_pfjet->eta());
-        mPFUncSrc[isrc]->setJetPt(scale * i_pfjet->pt());
-        float unc1 = mPFUncSrc[isrc]->getUncertainty(true);
-        uncSrc.push_back(unc1);
-      }
-    }
+//     double unc(0.0);
+//     vector<float> uncSrc(0);
+//     if (mPFPayloadName != "") {
+//       mPFUnc->setJetEta(i_pfjet->eta());
+//       mPFUnc->setJetPt(scale * i_pfjet->pt());
+//       unc = mPFUnc->getUncertainty(true);
+//     }
+//     if (mPFJECUncSrc != "") {
+//       for(unsigned isrc=0;isrc<mPFJECUncSrcNames.size();isrc++) {
+//         mPFUncSrc[isrc]->setJetEta(i_pfjet->eta());
+//         mPFUncSrc[isrc]->setJetPt(scale * i_pfjet->pt());
+//         float unc1 = mPFUncSrc[isrc]->getUncertainty(true);
+//         uncSrc.push_back(unc1);
+//       }
+//     }
     qcdpfjet.setP4(i_pfjet->p4());
-    qcdpfjet.setCor(scale);
-    qcdpfjet.setUnc(unc);
-    qcdpfjet.setUncSrc(uncSrc);
+    //qcdpfjet.setCor(scale);
+    //qcdpfjet.setUnc(unc);
+    //qcdpfjet.setUncSrc(uncSrc);
     qcdpfjet.setArea(i_pfjet->jetArea());
     double chf   = i_pfjet->chargedHadronEnergyFraction();
     double nhf   = (i_pfjet->neutralHadronEnergy() + i_pfjet->HFHadronEnergy())/i_pfjet->energy();
@@ -464,21 +464,21 @@ void ProcessedTreeProducerPFCalo::analyze(edm::Event const& event, edm::EventSet
   for(CaloJetCollection::const_iterator i_calojet = calojets->begin(); i_calojet != calojets->end(); i_calojet++) {
     int index = i_calojet-calojets->begin();
     edm::RefToBase<reco::Jet> calojetRef(edm::Ref<CaloJetCollection>(calojets,index));
-    double scale = mCALOJEC->correction(*i_calojet,event,iSetup);
+    //double scale = mCALOJEC->correction(*i_calojet,event,iSetup);
     //---- preselection -----------------
     if (fabs(i_calojet->y()) > mMaxY) continue;
-    double unc(0.0);
+/*    double unc(0.0);
     vector<float> uncSrc(0);
     if (mCaloPayloadName != "") {
       mCALOUnc->setJetEta(i_calojet->eta());
       mCALOUnc->setJetPt(scale * i_calojet->pt());
       unc = mCALOUnc->getUncertainty(true);
-    }
+    }*/
     QCDCaloJet qcdcalojet;
     qcdcalojet.setP4(i_calojet->p4());
-    qcdcalojet.setCor(scale);
-    qcdcalojet.setUnc(unc);
-    qcdcalojet.setUncSrc(uncSrc);
+    //qcdcalojet.setCor(scale);
+    //qcdcalojet.setUnc(unc);
+    //qcdcalojet.setUncSrc(uncSrc);
     qcdcalojet.setArea(i_calojet->jetArea());
     double emf    = i_calojet->emEnergyFraction();
     int n90hits   = int((*calojetID)[calojetRef].n90Hits);
