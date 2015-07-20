@@ -8,7 +8,9 @@
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include <stdlib.h>     /* getenv */
 
+#include "TString.h"
 using namespace edm;
 using namespace std;
 
@@ -19,7 +21,7 @@ class JECs  {
   typedef reco::Particle::LorentzVector LorentzVector;
 
   public:
-    JECs(bool IsMCarlo, string GlobalTag, string JETTYPE);
+   JECs(bool IsMCarlo, string GlobalTag, string JETTYPE);
 
     static bool sort_pfjets(QCDPFJet j1, QCDPFJet j2) {
         return j1.ptCor() > j2.ptCor();
@@ -48,14 +50,14 @@ class JECs  {
                pfjet = Event->pfjet(iJet); // ----- accessing the uncorrected jet in the event for non-chs jet----- //
 
                // ---- Old JEC factor ----- //
-               //double oldJecFactor = pfjet.cor();
+               double oldJecFactor = pfjet.cor();
 
                LorentzVector oldJetP4 = pfjet.p4(); // ---- accessing the 4-vector of the jet ---- //
                TLorentzVector tmpJet;
                tmpJet.SetPxPyPzE(oldJetP4.px(), oldJetP4.py(), oldJetP4.pz(), oldJetP4.energy());
 
-               //TLorentzVector UnCorrectedJet = tmpJet * (1./oldJecFactor); // --- obtaining the uncorrected jet 4-vector by scaling down by the old jec factor --- //
-                TLorentzVector UnCorrectedJet = tmpJet; ///Jets are already uncorrected
+               TLorentzVector UnCorrectedJet = tmpJet * (1./oldJecFactor); // --- obtaining the uncorrected jet 4-vector by scaling down by the old jec factor --- //
+               // TLorentzVector UnCorrectedJet = tmpJet; ///Jets are already uncorrected
                // ---- Evaluating the L1Fast correction factor ---- //
                jecL1Fast->setJetPt(UnCorrectedJet.Pt());
                jecL1Fast->setJetA(pfjet.area());
@@ -154,15 +156,18 @@ class JECs  {
     }
  };
 
- JECs::JECs(bool IsMCarlo, string GlobalTag, string JETTYPE){
+ inline JECs::JECs(bool IsMCarlo, string GlobalTag, string JETTYPE){
 
      string file_data_mc = "DATA";
      if(IsMCarlo)    file_data_mc = "MC";
 
+    string pPath;
+    pPath = getenv ("CMSSW_BASE");
 
-     L1Fast       = new JetCorrectorParameters("../data/"+GlobalTag+"/"+GlobalTag+"_"+file_data_mc+"_L1FastJet_"+JETTYPE+".txt");
-     L2Relative   = new JetCorrectorParameters("../data/"+GlobalTag+"/"+GlobalTag+"_"+file_data_mc+"_L2Relative_"+JETTYPE+".txt");
-     L3Absolute   = new JetCorrectorParameters("../data/"+GlobalTag+"/"+GlobalTag+"_"+file_data_mc+"_L3Absolute_"+JETTYPE+".txt");
+     string path_cmssw = pPath;
+     L1Fast       = new JetCorrectorParameters(path_cmssw+"/src/SMPJ/AnalysisFW/data/"+GlobalTag+"/"+GlobalTag+"_L1FastJet_"+JETTYPE+".txt");
+     L2Relative   = new JetCorrectorParameters(path_cmssw+"/src/SMPJ/AnalysisFW/data/"+GlobalTag+"/"+GlobalTag+"_L2Relative_"+JETTYPE+".txt");
+     L3Absolute   = new JetCorrectorParameters(path_cmssw+"/src/SMPJ/AnalysisFW/data/"+GlobalTag+"/"+GlobalTag+"_L3Absolute_"+JETTYPE+".txt");
      if(!IsMCarlo)
         L2L3Residual = new JetCorrectorParameters("../data/"+GlobalTag+"/"+GlobalTag+"_DATA_L2L3Residual_"+JETTYPE+".txt");
 
