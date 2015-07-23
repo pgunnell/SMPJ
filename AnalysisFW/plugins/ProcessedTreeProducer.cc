@@ -48,9 +48,8 @@ ProcessedTreeProducer::ProcessedTreeProducer(edm::ParameterSet const& cfg)
 //  mPFJECservice      = cfg.getParameter<std::string>               ("pfjecService");
   mPFPayloadName     = cfg.getParameter<std::string>               ("PFPayloadName");
   mPFPayloadNameCHS  = cfg.getParameter<std::string>               ("PFPayloadNameCHS");
-  	pfpujetid       = cfg.getParameter<std::string>               ("pfpujetid");
-	pfchsjetpuid    = cfg.getParameter<std::string>               ("pfchsjetpuid");
-
+  pfpujetid       = cfg.getParameter<std::string>               ("pfpujetid");
+  pfchsjetpuid    = cfg.getParameter<std::string>               ("pfchsjetpuid");
   mGoodVtxNdof       = cfg.getParameter<double>                    ("goodVtxNdof");
   mGoodVtxZ          = cfg.getParameter<double>                    ("goodVtxZ");
   mMinPFPt           = cfg.getParameter<double>                    ("minPFPt");
@@ -151,16 +150,12 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
 
   //-------------- HCAL Noise Summary -----------------------------
   Handle<bool> noiseSummary;
- /* if (!mIsMCarlo) {
+  if (!mIsMCarlo) {
    // event.getByLabel(mHBHENoiseFilter,noiseSummary);
    event.getByLabel(edm::InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"), noiseSummary);
     mEvtHdr.setHCALNoise(*noiseSummary);
   }
-  else */
-    mEvtHdr.setHCALNoise(true);
-
-
-
+  else    mEvtHdr.setHCALNoise(true);
 
   //-------------- Trigger Info -----------------------------------
   event.getByLabel(triggerResultsTag_,triggerResultsHandle_);
@@ -336,7 +331,7 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     } // if (mPFJECUncSrc != "")
     isPFJecUncSet_ = true;
   } // if (mPFPayloadName != "" && !isPFJecUncSet_)
-
+  
 
   Handle<GenJetCollection>  genjets;
   if (mIsMCarlo) {
@@ -677,6 +672,7 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
   event.getByToken(mPFMET, pfmet);
   const pat::MET &met = pfmet->front();
   mPFMet.setVar(met.et(),met.sumEt(),met.phi());
+  
 
   //-------------- fill the tree -------------------------------------
   sort(mPFJets.begin(),mPFJets.end(),sort_pfjets);
