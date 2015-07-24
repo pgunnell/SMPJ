@@ -244,7 +244,7 @@ process.ak8 = process.ak4.clone(
         PFPayloadNameCHS= cms.string('AK8PFchs'),
 )
 
-jetToolbox( process, 'ak7', 'ak5JetSubs','CHS')
+jetToolbox( process, 'ak7', 'ak7JetSubs','CHS')
 jetToolbox( process, 'ak7', 'ak7JetSubs')
 
 process.ak7 = process.ak4.clone(
@@ -280,12 +280,19 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
 ##MET Filters
 process.load('RecoMET.METFilters.CSCTightHaloFilter_cfi')
 process.load('CommonTools.RecoAlgos.HBHENoiseFilterResultProducer_cfi')
+
+process.HBHENoiseFilterResultProducerNoMinZ = process.HBHENoiseFilterResultProducer.clone(minZeros = cms.int32(1000))
+
+
 process.goodVertices = cms.EDFilter("VertexSelector",
    filter = cms.bool(False),
    src = cms.InputTag("offlinePrimaryVertices"),
    cut = cms.string("!isFake && ndof >= 4 && abs(z) <= 24 && position.rho <= 2"),
 )
 process.load('RecoMET.METFilters.trackingFailureFilter_cfi')
+
+
+
 
 ##Type1 patMET Producer
 process.load('PhysicsTools.PatAlgos.recoLayer0.metCorrections_cff')
@@ -295,6 +302,7 @@ process.patMETs.addGenMET = cms.bool(False)
 process.path = cms.Path(process.goodVertices*process.trackingFailureFilter*
 			process.hltFilter*
 			process.HBHENoiseFilterResultProducer*
+		        process.HBHENoiseFilterResultProducerNoMinZ*
 			process.patMETCorrections*process.patMETs*
 			process.ak4 *process.ak5*process.ak7*process.ak8)
 

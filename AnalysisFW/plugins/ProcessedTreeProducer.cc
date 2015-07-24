@@ -150,13 +150,21 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
 
   //-------------- HCAL Noise Summary -----------------------------
   Handle<bool> noiseSummary;
+  Handle<bool> noiseSummary_NoMinZ;
+
   if (!mIsMCarlo) {
    // event.getByLabel(mHBHENoiseFilter,noiseSummary);
    event.getByLabel(edm::InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"), noiseSummary);
-    mEvtHdr.setHCALNoise(*noiseSummary);
-  }
-  else    mEvtHdr.setHCALNoise(true);
+   mEvtHdr.setHCALNoise(*noiseSummary);
 
+   event.getByLabel(edm::InputTag("HBHENoiseFilterResultProducerNoMinZ","HBHENoiseFilterResult"), noiseSummary_NoMinZ);
+   mEvtHdr.setHCALNoiseNoMinZ(*noiseSummary_NoMinZ);
+
+  }
+  else{ 
+   mEvtHdr.setHCALNoise(true);
+   mEvtHdr.setHCALNoiseNoMinZ(true);
+  }
   //-------------- Trigger Info -----------------------------------
   event.getByLabel(triggerResultsTag_,triggerResultsHandle_);
   if (!triggerResultsHandle_.isValid()) {

@@ -22,6 +22,7 @@ class QCDEventHdr
       void setPV(bool fIsPVgood, float fndof, float fx, float fy, float fz) {mIsPVgood = fIsPVgood; mPVndof = fndof; mPVx = fx; mPVy = fy; mPVz = fz;}
       void setBS(float fBSx, float fBSy, float fBSz) {mBSx = fBSx; mBSy = fBSy; mBSz = fBSz;}
       void setHCALNoise(bool fNoise) {mHCALNoise = fNoise;}
+      void setHCALNoiseNoMinZ(bool fNoise) {mHCALNoiseNoMinZ = fNoise;}
       void setPU(int fNBX, int fOOTPUEarly, int fOOTPULate, int fINTPU) {mNBX = fNBX; mOOTPUEarly = fOOTPUEarly; mOOTPULate = fOOTPULate; mINTPU = fINTPU;}
       void setTrPu(float fTrPu) {mTrPu = fTrPu;} // setting the true PU 
       //------------ Get methods ------------------------------
@@ -39,6 +40,7 @@ class QCDEventHdr
       float trpu()          const {return mTrPu;} // get method for True number of interaction
       bool isPVgood()       const {return mIsPVgood;}
       bool hcalNoise()      const {return mHCALNoise;}
+      bool hcalNoiseNoMinZ()      const {return mHCALNoiseNoMinZ;}
       float PVndof()        const {return mPVndof;} 
       float PVx()           const {return mPVx;}
       float PVy()           const {return mPVy;}
@@ -55,6 +57,8 @@ class QCDEventHdr
         bool mIsPVgood; 
         //---- flags about the HCAL noise -------------
         bool mHCALNoise;
+        //---- flags about the HCAL noise -------------
+        bool mHCALNoiseNoMinZ;
         //---- run number ----------------------------- 
         int mRun;
         //---- event number ---------------------------
