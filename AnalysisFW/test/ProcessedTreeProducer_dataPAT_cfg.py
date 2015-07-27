@@ -281,7 +281,7 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
 process.load('RecoMET.METFilters.CSCTightHaloFilter_cfi')
 process.load('CommonTools.RecoAlgos.HBHENoiseFilterResultProducer_cfi')
 
-process.HBHENoiseFilterResultProducerNoMinZ = process.HBHENoiseFilterResultProducer.clone(minZeros = cms.int32(1000))
+process.HBHENoiseFilterResultProducerNoMinZ = process.HBHENoiseFilterResultProducer.clone(minZeros = cms.int32(99999))
 
 
 process.goodVertices = cms.EDFilter("VertexSelector",
