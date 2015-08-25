@@ -189,9 +189,28 @@ void ProcessedTreeProducer::analyze(edm::Event const& event, edm::EventSetup con
     vector<LorentzVector> vvL1,vvHLT;
     if (triggerIndex_[itrig] < hltConfig_.size()) {
       accept = triggerResultsHandle_->accept(triggerIndex_[itrig]);
-      const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));
-      preL1    = prescales.first;
-      preHLT   = prescales.second;
+//      const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));
+
+///In detail
+		//get prescale info from hltConfig_
+	std::pair<std::vector<std::pair<std::string,int> >,int> detailedPrescaleInfo = hltConfig_.prescaleValuesInDetail(event, iSetup, triggerNames_[itrig]);	 
+	preHLT = detailedPrescaleInfo.second ;
+	// save l1 prescale values in standalone vector
+	std::vector <int> l1prescalevals;
+	for( size_t varind = 0; varind < detailedPrescaleInfo.first.size(); varind++ ){
+	  l1prescalevals.push_back(detailedPrescaleInfo.first.at(varind).second);
+
+	}
+
+	// find and save minimum l1 prescale of any ORed L1 that seeds the HLT
+ 	std::vector<int>::iterator result = std::min_element(std::begin(l1prescalevals), std::end(l1prescalevals));
+	size_t minind = std::distance(std::begin(l1prescalevals), result);
+	// sometimes there are no L1s associated with a HLT. In that case, this branch stores -1 for the l1prescale
+      //l1prescales->push_back( minind < l1prescalevals.size() ? l1prescalevals.at(minind) : -1 );
+      preL1 = minind < l1prescalevals.size() ? l1prescalevals.at(minind) : -1 ;
+///end in detail
+//      preL1    = prescales.first;
+///      preHLT   = prescales.second;
       if (!accept)
         tmpFired = 0;
       else {
