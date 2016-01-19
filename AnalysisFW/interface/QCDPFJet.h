@@ -23,6 +23,9 @@ class QCDPFJet : public QCDJet {
      void setVtxInfo(int mpuTrk, int mlvTrk, int mjtTrk) { mpuTrk_ = mpuTrk; mlvTrk_ = mlvTrk; mjtTrk_ = mjtTrk;} // Juska
      void setHO(float hof) {hof_ = hof;} // Juska
      void SetPUJetId(float pujid) { pujid_ = pujid; }
+     void SetCaloJetPt(float calojetpt) { calojetpt_ = calojetpt; }
+     void SetCaloJetEf(float calojetef) { calojetef_ = calojetef; }   
+
     /*
      void setPFParticles(std::vector<LorentzVector>& fpfFParticles) {
       for(unsigned i=0; i<fpfFParticles.size(); i++)
@@ -50,6 +53,8 @@ class QCDPFJet : public QCDJet {
      int hf_hm()      const {return hf_hm_;}
      int hf_phm()     const {return hf_phm_;}
      int ncand()      const {return ncand_;}
+     float CaloJetPt() const {return calojetpt_;}
+     float CaloJetEf() const {return calojetef_;}
  //    int nParticles() const {return pfParticles_.size();}
  //    const LorentzVector& getPFParticles(int i) const {return pfParticles_[i];}
 
@@ -106,6 +111,9 @@ class QCDPFJet : public QCDJet {
      float hof_; // Hadronic Outer energy fraction
 
      float pujid_;
+
+     float calojetpt_;
+     float calojetef_;
 
     };
 #endif

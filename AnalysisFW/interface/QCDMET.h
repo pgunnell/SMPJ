@@ -13,8 +13,10 @@ class QCDMET
      ~QCDMET() {}
      //------- Set method ------------------------------------
      void setVar(float fEt, float fSumEt, float fPhi) {et_ = fEt; sumEt_ = fSumEt; phi_ = fPhi;} 
+     void setCaloMet(float fCaloMetPt) {CaloMetPt_ = fCaloMetPt;}
      //------- Get methods -----------------------------------
      float met()         const {return et_;}
+     float calometpt()         const {return CaloMetPt_;}
      float phi()         const {return phi_;}
      float sumet()       const {return sumEt_;}
      float met_o_sumet() const {return et_/sumEt_;}
@@ -22,6 +24,7 @@ class QCDMET
    private:
      //---- size of MET vector ----------
      float et_;
+     float CaloMetPt_;
      //---- sumET -----------------------
      float sumEt_;
      //---- phi of MET vector -----------
