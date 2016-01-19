@@ -30,8 +30,14 @@ class QCDEvent
       void setGenJets(const std::vector<LorentzVector>& fGenJets);
       void setL1Obj(const std::vector<std::vector<LorentzVector> >& fL1Obj);
       void setHLTObj(const std::vector<std::vector<LorentzVector> >& fHLTObj);
+      void setFilterId(const std::vector<std::vector<int> >& filterIdList) {filterIdList_ = filterIdList;}
       void setPrescales(const std::vector<int>& fPreL1, const std::vector<int>& fPreHLT) {L1Prescale_ = fPreL1; HLTPrescale_ = fPreHLT;}
       void setTrigDecision(const std::vector<int>& fTrigDecision) {TriggerDecision_ = fTrigDecision;}
+      void setTrigPathList(const std::vector<std::string>& trigPathList) {triggerList_ = trigPathList;}
+
+      void setGenFlavour(const std::vector<float> GenFlavour){ genFlavour_= GenFlavour; }
+      void setGenHadronFlavour(const std::vector<float> GenFlavourHadron){ genFlavourHadron_= GenFlavourHadron; }
+
       //------------ Get methods -------------------------------
       unsigned int nTriggers()                         const {return TriggerDecision_.size();}
       unsigned int nL1Obj(int i)                       const {return L1Obj_[i].size();}
@@ -46,6 +52,9 @@ class QCDEvent
       int preL1(int i)                                 const {return L1Prescale_[i];}
       int preHLT(int i)                                const {return HLTPrescale_[i];}
       float pfmjj();
+
+      float GenJetFlavour(int i)                       const {return genFlavour_[i];}
+      float GenHadronJetFlavour(int i)                       const {return genFlavourHadron_[i];}
 
       float calomjj();
       float genmjj();
@@ -68,7 +77,15 @@ class QCDEvent
       const QCDCaloJet&    calojet(int i)              const {return CaloJets_[i];}
       const QCDEventHdr&   evtHdr()                    const {return EvtHdr_;}
 
+      const std::vector<std::vector<LorentzVector>>& HLTObj() const {return HLTObj_;}
+      const std::vector<std::string>& trigPathList() const {return triggerList_;}
+      const std::vector<std::vector<int>>& filterIdList() const {return filterIdList_;}
+      const std::vector<LorentzVector>& hltObjsForPath(int i) const {return HLTObj_[i];}
+      const std::vector<int>& filterIdsForPath(int i) const {return filterIdList_[i];}
+
     private:
+      std::vector<std::vector<int> > filterIdList_;
+
       //---- event header (contains all the event info) --------------
       QCDEventHdr                              EvtHdr_;
       //---- CALO met object -----------------------------------------
@@ -77,6 +94,7 @@ class QCDEvent
       QCDMET                                   PFMet_;
       //---- trigger decision vector ---------------------------------
       std::vector<int>                         TriggerDecision_;
+      std::vector<std::string>                 triggerList_;
       //---- L1 prescale vector --------------------------------------
       std::vector<int>                         L1Prescale_;
       //---- HLT prescale vector -------------------------------------
@@ -95,5 +113,8 @@ class QCDEvent
       std::vector<QCDPFJet>                    PFJetsCHS_;
       //---- FatJets -------------------------------------------------
       //std::vector<QCDJet>                      FatJets_;
+      std::vector<float>  genFlavour_;
+      std::vector<float>  genFlavourHadron_;
+
 };
 #endif
