@@ -9,5 +9,6 @@ QCDMET        qcdmet;
 QCDJet        qcdjet;
 QCDCaloJet    qcdcalojet;
 QCDPFJet      qcdpfjet;
+QCDPFJetBTag  qcdpfjetbtag;
 QCDEvent      qcdevent;
 QCDEventHdr   qcdeventhdr;
