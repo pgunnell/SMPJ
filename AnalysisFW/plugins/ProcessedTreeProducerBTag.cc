@@ -19,37 +19,10 @@
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Common/interface/TriggerResultsByName.h"
 
-#include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
-#include "DataFormats/Common/interface/Handle.h"
-#include "DataFormats/Math/interface/deltaR.h"
-#include "DataFormats/JetReco/interface/Jet.h"
-#include "DataFormats/JetReco/interface/PFJet.h"
-#include "DataFormats/JetReco/interface/PFJetCollection.h"
-#include "DataFormats/JetReco/interface/GenJet.h"
-#include "DataFormats/JetReco/interface/GenJetCollection.h"
-#include "DataFormats/JetReco/interface/JetExtendedAssociation.h"
-#include "DataFormats/JetReco/interface/JetID.h"
-#include "DataFormats/METReco/interface/HcalNoiseSummary.h"
-#include "DataFormats/BeamSpot/interface/BeamSpot.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
 
-#include "DataFormats/PatCandidates/interface/MET.h"
-#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+ProcessedTreeProducerBTag::ProcessedTreeProducerBTag(edm::ParameterSet const& cfg):
+hltPrescale_(cfg, consumesCollector(), *this)
 
-#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
-
-#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
-#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
-
-#include "PhysicsTools/PatUtils/interface/bJetSelector.h"
-#include "PhysicsTools/PatExamples/interface/BTagPerformance.h"
-#include "PhysicsTools/PatExamples/interface/PatBTagCommonHistos.h"
-
-#include "DataFormats/Math/interface/deltaR.h"
-
-ProcessedTreeProducerBTag::ProcessedTreeProducerBTag(edm::ParameterSet const& cfg)
 {
 //  mPFJECservice      = cfg.getParameter<std::string>               ("pfjecService");
   mPFPayloadName     = cfg.getParameter<std::string>               ("PFPayloadName");
@@ -62,25 +35,32 @@ ProcessedTreeProducerBTag::ProcessedTreeProducerBTag(edm::ParameterSet const& cf
   mMinJJMass         = cfg.getParameter<double>                    ("minJJMass");
   mMaxY              = cfg.getParameter<double>                    ("maxY");
   mMinNPFJets        = cfg.getParameter<int>                       ("minNPFJets");
-  mOfflineVertices   = cfg.getParameter<edm::InputTag>             ("offlineVertices");
-  mPFJetsName        = cfg.getParameter<edm::InputTag>             ("pfjets");
-  mPFJetsNameCHS     = cfg.getParameter<edm::InputTag>             ("pfjetschs");
-  mSrcCaloRho        = cfg.getParameter<edm::InputTag>             ("srcCaloRho");
-  mSrcPFRho          = cfg.getParameter<edm::InputTag>             ("srcPFRho");
+  mOfflineVertices   =(consumes<reco::VertexCollection>(cfg.getParameter<edm::InputTag>("offlineVertices")));
+  mPFJetsName = consumes<edm::View<pat::Jet> >(cfg.getParameter<edm::InputTag>("pfjets"));
+  mPFJetsNameCHS = consumes<edm::View<pat::Jet> >(cfg.getParameter<edm::InputTag>("pfjetschs"));
+  mSrcCaloRho = consumes<double >(cfg.getParameter<edm::InputTag>("srcCaloRho"));
+  mSrcPFRho = consumes<double >(cfg.getParameter<edm::InputTag>("srcPFRho"));
   mPFMET             =(consumes<pat::METCollection>(cfg.getParameter<edm::InputTag>("pfmet")));
-  mSrcPU             = cfg.getUntrackedParameter<edm::InputTag>    ("srcPU",edm::InputTag("addPileupInfo"));
-  mGenJetsName       = cfg.getUntrackedParameter<edm::InputTag>    ("genjets",edm::InputTag(""));
+  mSrcPU = consumes<std::vector<PileupSummaryInfo> >(cfg.getParameter<edm::InputTag>("srcPU"));
+  mGenJetsName = consumes<GenJetCollection >(cfg.getParameter<edm::InputTag>("genjets"));
   mPrintTriggerMenu  = cfg.getUntrackedParameter<bool>             ("printTriggerMenu",false);
   mIsMCarlo          = cfg.getUntrackedParameter<bool>             ("isMCarlo",false);
   mUseGenInfo        = cfg.getUntrackedParameter<bool>             ("useGenInfo",false);
   mMinGenPt          = cfg.getUntrackedParameter<double>           ("minGenPt",30);
   processName_       = cfg.getParameter<std::string>               ("processName");
   triggerNames_      = cfg.getParameter<std::vector<std::string> > ("triggerName");
-  triggerResultsTag_ = cfg.getParameter<edm::InputTag>             ("triggerResults");
-  triggerEventTag_   = cfg.getParameter<edm::InputTag>             ("triggerEvent");
+  triggerResultsTag_ = consumes<edm::TriggerResults >(cfg.getParameter<edm::InputTag>("triggerResults"));
+  triggerEventTag_   = consumes<trigger::TriggerEvent >(cfg.getParameter<edm::InputTag>("triggerEvent"));
   mPFJECUncSrc       = cfg.getParameter<std::string>               ("jecUncSrc");
   mPFJECUncSrcCHS    = cfg.getParameter<std::string>               ("jecUncSrcCHS");
   mPFJECUncSrcNames  = cfg.getParameter<std::vector<std::string> > ("jecUncSrcNames");
+  mofflineBeamSpot   = consumes<reco::BeamSpot >(cfg.getParameter<edm::InputTag>("offlineBeamSpot"));
+  noiseSummaryToken  = consumes<bool >(cfg.getParameter<edm::InputTag>("noiseSummary"));
+  noiseSummary_NoMinZToken  = consumes<bool >(cfg.getParameter<edm::InputTag>("noiseSummary_NoMinZ"));
+  genParticlesToken  = consumes<reco::GenParticleCollection >(cfg.getParameter<edm::InputTag>("genParticles"));
+  generatorToken      = consumes<GenEventInfoProduct >(cfg.getParameter<edm::InputTag>("generator"));
+
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void ProcessedTreeProducerBTag::beginJob()
@@ -89,11 +69,11 @@ void ProcessedTreeProducerBTag::beginJob()
   mEvent = new QCDEvent();
   mTree->Branch("events","QCDEvent",&mEvent);
   mTriggerNamesHisto = fs->make<TH1F>("TriggerNames","TriggerNames",1,0,1);
-  mTriggerNamesHisto->SetBit(TH1::kCanRebin);
+  //mTriggerNamesHisto->SetBit(TH1::kCanRebin);
   for(unsigned i=0;i<triggerNames_.size();i++)
     mTriggerNamesHisto->Fill(triggerNames_[i].c_str(),1);
   mTriggerPassHisto = fs->make<TH1F>("TriggerPass","TriggerPass",1,0,1);
-  mTriggerPassHisto->SetBit(TH1::kCanRebin);
+  //mTriggerPassHisto->SetBit(TH1::kCanRebin);
   isPFJecUncSet_ = false;
   isPFJecUncSetCHS_ = false;
 }
@@ -105,7 +85,7 @@ void ProcessedTreeProducerBTag::endJob()
 void ProcessedTreeProducerBTag::beginRun(edm::Run const & iRun, edm::EventSetup const& iSetup)
 {
   bool changed(true);
-  if (hltConfig_.init(iRun,iSetup,processName_,changed)) {
+  if (hltConfig_.init(iRun,iSetup,processName_,changed) && hltPrescale_.init(iRun, iSetup, processName_, changed)  ) {
     if (changed) {
       // check if trigger names in (new) config
       cout<<"New trigger menu found !!!"<<endl;
@@ -149,7 +129,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   mEvtHdr.setBunch(event.bunchCrossing());
   //-------------- Beam Spot --------------------------------------
   Handle<reco::BeamSpot> beamSpot;
-  event.getByLabel("offlineBeamSpot", beamSpot);
+  event.getByToken(mofflineBeamSpot, beamSpot);
   if (beamSpot.isValid())
     mEvtHdr.setBS(beamSpot->x0(),beamSpot->y0(),beamSpot->z0());
   else
@@ -157,15 +137,13 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 
 
   //-------------- HCAL Noise Summary -----------------------------
-  Handle<bool> noiseSummary;
-  Handle<bool> noiseSummary_NoMinZ;
+  edm::Handle<bool> noiseSummary;
+  edm::Handle<bool> noiseSummary_NoMinZ;
 
   if (!mIsMCarlo) {
-   // event.getByLabel(mHBHENoiseFilter,noiseSummary);
-   event.getByLabel(edm::InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"), noiseSummary);
+   event.getByToken(noiseSummaryToken, noiseSummary);
    mEvtHdr.setHCALNoise(*noiseSummary);
-
-   event.getByLabel(edm::InputTag("HBHENoiseFilterResultProducerNoMinZ","HBHENoiseFilterResult"), noiseSummary_NoMinZ);
+   event.getByToken(noiseSummary_NoMinZToken, noiseSummary_NoMinZ);
    mEvtHdr.setHCALNoiseNoMinZ(*noiseSummary_NoMinZ);
 
   }
@@ -173,21 +151,24 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
    mEvtHdr.setHCALNoise(true);
    mEvtHdr.setHCALNoiseNoMinZ(true);
   }
+
+
   //-------------- Trigger Info -----------------------------------
-  event.getByLabel(triggerResultsTag_,triggerResultsHandle_);
+  event.getByToken(triggerResultsTag_,triggerResultsHandle_);
   if (!triggerResultsHandle_.isValid()) {
     cout << "ProcessedTreeProducerBTag::analyze: Error in getting TriggerResults product from Event!" << endl;
     return;
   }
-  event.getByLabel(triggerEventTag_,triggerEventHandle_);
+  event.getByToken(triggerEventTag_,triggerEventHandle_);
   if (!triggerEventHandle_.isValid()) {
     cout << "ProcessedTreeProducerBTag::analyze: Error in getting TriggerEvent product from Event!" << endl;
     return;
   }
+
   vector<int> L1Prescales,HLTPrescales,Fired;
   vector<vector<LorentzVector> > mL1Objects,mHLTObjects;
   // sanity check
-  assert(triggerResultsHandle_->size() == hltConfig_.size());
+  //assert(triggerResultsHandle_->size() == hltConfig_.size());
   //------ loop over all trigger names ---------
   for(unsigned itrig=0;itrig<triggerNames_.size() && !mIsMCarlo;itrig++) {
     bool accept(false);
@@ -197,28 +178,30 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
     vector<LorentzVector> vvL1,vvHLT;
     if (triggerIndex_[itrig] < hltConfig_.size()) {
       accept = triggerResultsHandle_->accept(triggerIndex_[itrig]);
-//      const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));
+      //const std::pair<int,int> prescales(hltPrescale_.prescaleValues(event,iSetup,triggerNames_[itrig]));
 
+ //const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));    //      const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));
+       //preL1    = prescales.first;    
+       //preHLT   = prescales.second;
 ///In detail
 		//get prescale info from hltConfig_
-	std::pair<std::vector<std::pair<std::string,int> >,int> detailedPrescaleInfo = hltConfig_.prescaleValuesInDetail(event, iSetup, triggerNames_[itrig]);	 
+	std::pair<std::vector<std::pair<std::string,int> >,int> detailedPrescaleInfo = hltPrescale_.prescaleValuesInDetail(event, iSetup, triggerNames_[itrig]);	 
 	preHLT = detailedPrescaleInfo.second ;
+
 	// save l1 prescale values in standalone vector
 	std::vector <int> l1prescalevals;
 	for( size_t varind = 0; varind < detailedPrescaleInfo.first.size(); varind++ ){
-	  l1prescalevals.push_back(detailedPrescaleInfo.first.at(varind).second);
-
+     l1prescalevals.push_back(detailedPrescaleInfo.first.at(varind).second);
 	}
+
 
 	// find and save minimum l1 prescale of any ORed L1 that seeds the HLT
  	std::vector<int>::iterator result = std::min_element(std::begin(l1prescalevals), std::end(l1prescalevals));
 	size_t minind = std::distance(std::begin(l1prescalevals), result);
 	// sometimes there are no L1s associated with a HLT. In that case, this branch stores -1 for the l1prescale
-      //l1prescales->push_back( minind < l1prescalevals.size() ? l1prescalevals.at(minind) : -1 );
       preL1 = minind < l1prescalevals.size() ? l1prescalevals.at(minind) : -1 ;
 ///end in detail
-//      preL1    = prescales.first;
-///      preHLT   = prescales.second;
+    
       if (!accept)
         tmpFired = 0;
       else {
@@ -280,7 +263,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 
   //-------------- Vertex Info -----------------------------------
   Handle<reco::VertexCollection> recVtxs;
-  event.getByLabel(mOfflineVertices,recVtxs);
+  event.getByToken(mOfflineVertices,recVtxs);
   //------------- reject events without reco vertices ------------
   int VtxGood(0);
   bool isPVgood(false);
@@ -304,23 +287,24 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   mEvtHdr.setPV(isPVgood,PVndof,PVx,PVy,PVz);
   //-------------- Rho ------------------------------------------------
   Handle<double> rhoCalo;
-  event.getByLabel(mSrcCaloRho,rhoCalo);
+  event.getByToken(mSrcCaloRho,rhoCalo);
   Handle<double> rhoPF;
-  event.getByLabel(mSrcPFRho,rhoPF);
+  event.getByToken(mSrcPFRho,rhoPF);
   mEvtHdr.setRho(*rhoCalo,*rhoPF);
   //-------------- Generator Info -------------------------------------
   Handle<GenEventInfoProduct> hEventInfo;
   //-------------- Simulated PU Info ----------------------------------
   Handle<std::vector<PileupSummaryInfo> > PupInfo;
   if (mIsMCarlo && mUseGenInfo) {
-    event.getByLabel("generator", hEventInfo);
+    //event.getByToken("generator", hEventInfo);
+    event.getByToken(generatorToken, hEventInfo);
     if(hEventInfo->hasBinningValues())
     mEvtHdr.setPthat(hEventInfo->binningValues()[0]);
     else
     mEvtHdr.setPthat(0);
 
     mEvtHdr.setWeight(hEventInfo->weight());
-    event.getByLabel(mSrcPU, PupInfo);
+    event.getByToken(mSrcPU, PupInfo);
     std::vector<PileupSummaryInfo>::const_iterator PUI;
     int nbx = PupInfo->size();
     int ootpuEarly(0),ootpuLate(0),intpu(0);
@@ -369,7 +353,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 
   Handle<GenJetCollection>  genjets;
   if (mIsMCarlo) {
-    event.getByLabel(mGenJetsName,genjets);
+    event.getByToken(mGenJetsName,genjets);
     for(GenJetCollection::const_iterator i_gen = genjets->begin(); i_gen != genjets->end(); i_gen++) {
       if (i_gen->pt() > mMinGenPt && fabs(i_gen->y()) < mMaxY) {
         mGenJets.push_back(i_gen->p4());
@@ -391,10 +375,10 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   //----------- PFJets non CHS part -------------------------
   
   edm::Handle<edm::View<pat::Jet> > patjets;
-  event.getByLabel(mPFJetsName,patjets);
+  event.getByToken(mPFJetsName,patjets);
   
   /*edm::Handle<reco::JetTagCollection> btagDiscriminators;
-    event.getByLabel("pfCombinedInclusiveSecondaryVertexV2BJetTags", btagDiscriminators);  */
+    event.getByToken("pfCombinedInclusiveSecondaryVertexV2BJetTags", btagDiscriminators);  */
   
   for(edm::View<pat::Jet>::const_iterator i_pfjet=patjets->begin(); i_pfjet!=patjets->end(); ++i_pfjet)
     {
@@ -607,7 +591,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   //----------- PFJets  CHS part -------------------------
 
   edm::Handle<edm::View<pat::Jet> > patjetschs;
-  event.getByLabel(mPFJetsNameCHS,patjetschs);
+  event.getByToken(mPFJetsNameCHS,patjetschs);
   
   for(edm::View<pat::Jet>::const_iterator i_pfjetchs=patjetschs->begin(); i_pfjetchs!=patjetschs->end(); ++i_pfjetchs)
      {
@@ -839,7 +823,8 @@ int ProcessedTreeProducerBTag::getMatchedPartonGen(edm::Event const& event,GenJe
   bool switchC=0;
 
   edm::Handle<reco::GenParticleCollection> genParticles;
-  event.getByLabel ("genParticles", genParticles);
+  //event.getByToken ("genParticles", genParticles);
+  event.getByToken (genParticlesToken, genParticles);
 
   for (size_t i = 0; i < genParticles->size (); ++i) {
       const GenParticle & genIt = (*genParticles)[i];
@@ -870,7 +855,8 @@ int ProcessedTreeProducerBTag::getMatchedHadronGen(edm::Event const& event,GenJe
   int jetFlavour=-100;
 
   edm::Handle<reco::GenParticleCollection> genParticles;
-  event.getByLabel ("genParticles", genParticles);
+  //event.getByToken ("genParticles", genParticles);
+  event.getByToken (genParticlesToken, genParticles);
 
   for (size_t i = 0; i < genParticles->size (); ++i) {
     const GenParticle & genIt = (*genParticles)[i];

@@ -1,26 +1,50 @@
 #ifndef ProcessedTreeProducerBTag_h
 #define ProcessedTreeProducerBTag_h
 
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
-#include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/HLTReco/interface/TriggerEvent.h"
-#include "JetMETCorrections/Objects/interface/JetCorrector.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
-#include "DataFormats/PatCandidates/interface/Jet.h"
-#include "DataFormats/PatCandidates/interface/JetCorrFactors.h"
 #include "SMPJ/AnalysisFW/interface/QCDJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDEvent.h"
 #include "SMPJ/AnalysisFW/interface/QCDEventHdr.h"
 #include "SMPJ/AnalysisFW/interface/QCDPFJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDPFJetBTag.h"
 #include "SMPJ/AnalysisFW/interface/QCDMET.h"
+
+
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
+#include "JetMETCorrections/Objects/interface/JetCorrector.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/JetCorrFactors.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/JetReco/interface/PFJet.h"
+#include "DataFormats/JetReco/interface/PFJetCollection.h"
+#include "DataFormats/JetReco/interface/GenJet.h"
+#include "DataFormats/JetReco/interface/GenJetCollection.h"
+#include "DataFormats/JetReco/interface/JetExtendedAssociation.h"
+#include "DataFormats/JetReco/interface/JetID.h"
+#include "DataFormats/METReco/interface/HcalNoiseSummary.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+#include "PhysicsTools/PatUtils/interface/bJetSelector.h"
+#include "PhysicsTools/PatExamples/interface/BTagPerformance.h"
+#include "PhysicsTools/PatExamples/interface/PatBTagCommonHistos.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 using namespace edm;
 using namespace reco;
@@ -63,26 +87,32 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
     std::vector<std::string> mPFJECUncSrcNames;
     std::vector<std::string> mBDiscriminators;
     // ---- non CHS jet input tag ----- //
-    edm::InputTag mPFJetsName;
+    edm::EDGetTokenT<edm::View<pat::Jet> > mPFJetsName;
     // ----CHS jet input tag ----- //
-    edm::InputTag mPFJetsNameCHS;
-    edm::InputTag mGenJetsName;
-    edm::InputTag mOfflineVertices;
-    edm::InputTag mSrcCaloRho;
-    edm::InputTag mSrcPFRho;
-    edm::InputTag mSrcPU;
-    //edm::InputTag mPFMET;
-    edm::EDGetTokenT<pat::METCollection> mPFMET;
+    edm::EDGetTokenT<edm::View<pat::Jet> >            mPFJetsNameCHS;
+    edm::EDGetTokenT<GenJetCollection >               mGenJetsName;
+    edm::EDGetTokenT<reco::VertexCollection >         mOfflineVertices;
+    edm::EDGetTokenT<double >                         mSrcCaloRho;
+    edm::EDGetTokenT<double >                         mSrcPFRho;
+    edm::EDGetTokenT<std::vector<PileupSummaryInfo> > mSrcPU;
+    edm::EDGetTokenT<reco::BeamSpot >                 mofflineBeamSpot;
+    edm::EDGetTokenT<pat::METCollection>              mPFMET;
+    edm::EDGetTokenT<bool >                 noiseSummaryToken;
+    edm::EDGetTokenT<bool >              noiseSummary_NoMinZToken;
+    edm::EDGetTokenT<reco::GenParticleCollection >                 genParticlesToken;
+    edm::EDGetTokenT<GenEventInfoProduct >                 generatorToken;
+
     //edm::InputTag mHBHENoiseFilter;
     //---- TRIGGER -------------------------
     std::string   processName_;
     std::vector<std::string> triggerNames_;
     std::vector<unsigned int> triggerIndex_;
-    edm::InputTag triggerResultsTag_;
-    edm::InputTag triggerEventTag_;
+    edm::EDGetTokenT<edm::TriggerResults > triggerResultsTag_;
+    edm::EDGetTokenT<trigger::TriggerEvent> triggerEventTag_;
     edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
     edm::Handle<trigger::TriggerEvent> triggerEventHandle_;
     HLTConfigProvider hltConfig_;
+    HLTPrescaleProvider hltPrescale_;
     //---- CORRECTORS ----------------------
     const JetCorrector *mPFJEC;
     // ---- non CHS jet uncertainty ------ //
@@ -102,6 +132,7 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
 
     int getMatchedPartonGen(edm::Event const& event, GenJetCollection::const_iterator i_gen);
     int getMatchedHadronGen(edm::Event const& event, GenJetCollection::const_iterator i_gen);
+
 
 };
 

@@ -4,6 +4,7 @@
 #include "SMPJ/AnalysisFW/interface/QCDPFJet.h"
 #include "SMPJ/AnalysisFW/interface/QCDEvent.h"
 #include "SMPJ/AnalysisFW/interface/QCDEventHdr.h"
+#include "SMPJ/AnalysisFW/interface/QCDPFJetBTag.h"
  
 QCDMET        qcdmet;
 QCDJet        qcdjet;
