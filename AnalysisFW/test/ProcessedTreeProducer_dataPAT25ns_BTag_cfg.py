@@ -3,10 +3,10 @@
 import FWCore.ParameterSet.Config as cms
 
 from RecoJets.Configuration.RecoPFJets_cff import ak4PFJets, ak4PFJetsCHS
-from RecoJets.Configuration.RecoGenJets_cff import ak4GenJets
+#from RecoJets.Configuration.RecoGenJets_cff import ak4GenJets
 from RecoJets.JetProducers.SubJetParameters_cfi import SubJetParameters
 from RecoJets.JetProducers.PFJetParameters_cfi import *
-from RecoJets.JetProducers.GenJetParameters_cfi import *
+#from RecoJets.JetProducers.GenJetParameters_cfi import *
 from RecoJets.JetProducers.AnomalousCellParameters_cfi import *
 from PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff import *
 from PhysicsTools.PatAlgos.selectionLayer1.jetSelector_cfi import selectedPatJets
@@ -32,16 +32,15 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condD
 process.load("Configuration.EventContent.EventContent_cff")
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
-process.load('RecoJets.Configuration.GenJetParticles_cff')
-process.load('RecoJets.Configuration.RecoGenJets_cff')
+#process.load('RecoJets.Configuration.GenJetParticles_cff')
+#process.load('RecoJets.Configuration.RecoGenJets_cff')
 process.load('RecoJets.JetProducers.TrackJetParameters_cfi')
 process.load('RecoJets.JetProducers.PileupJetIDParams_cfi')
 process.load("PhysicsTools.PatAlgos.patSequences_cff")
 
 #process.load("PhysicsTools.PatAlgos.slimming.pileupJetId_cfi")
 
-#process.GlobalTag.globaltag = "74X_dataRun2_Prompt_v4"
-process.GlobalTag.globaltag = "74X_dataRun2_v5"
+process.GlobalTag.globaltag = "76X_dataRun2_v15"
 
 ##-------------------- Import the JEC services -----------------------
 process.load('JetMETCorrections.Configuration.DefaultJEC_cff')
@@ -55,7 +54,8 @@ inFiles = cms.untracked.vstring(
 #'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/630/00000/BC44672C-345F-E511-BEA5-02163E0141FB.root'
 #'root://xrootd.unl.edu//store/data/Run2015C/JetHT/AOD/PromptReco-v1/000/253/890/00000/24D029CE-2741-E511-B0AF-02163E014604.root'
 #'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/674/00000/36D872F3-F95E-E511-870B-02163E013539.root'
-'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/729/00000/5C1F5529-F65F-E511-9B8C-02163E0145D9.root'
+#'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/729/00000/5C1F5529-F65F-E511-9B8C-02163E0145D9.root'
+ 'file:/afs/cern.ch/work/g/gflouris/Ntuples_13TeV/CMSSW_7_6_3/src/SMPJ/AnalysisFW/test/5C1F5529-F65F-E511-9B8C-02163E0145D9.root'
    )
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
@@ -80,8 +80,11 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 	elemToKeep = []
 
 	print 'Running processes with: '+str(jetALGO)+' PF '+PUMethod+' jet algorithm with radius parameter '+str(jetSize)
+	if(size=='7') :
+	  JETCorrPayload = 'AK8PF'+PUMethod.lower()
+	else :
+	  JETCorrPayload = 'AK'+size+'PF'+PUMethod.lower()
 
-	JETCorrPayload = 'AK'+size+'PF'+PUMethod.lower()
 	JETCorrLevels = ['L1FastJet', 'L2Relative', 'L3Absolute','L2L3Residual']
 	#JETCorrLevels = [] #No JEC corrections
 	JEC = ( JETCorrPayload, JETCorrLevels , 'None')
@@ -97,9 +100,9 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 	tvLabel = ''
 	toolsUsed = []
 
-	proc.load('RecoJets.Configuration.GenJetParticles_cff')
-	setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) ) 
-	jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
+	#proc.load('RecoJets.Configuration.GenJetParticles_cff')
+	#setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) ) 
+	#jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
 
 	proc.load('CommonTools.ParticleFlow.pfNoPileUpJME_cff')
 	####  Creating PATjets
@@ -137,7 +140,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 			jetCorrections =  JEC, #( 'AK'+size+'PFchs', cms.vstring( ['L1FastJet', 'L2Relative', 'L3Absolute']), 'None'),
 			pfCandidates = cms.InputTag( 'particleFlow' ),  #'packedPFCandidates'),
 			svSource = cms.InputTag('inclusiveCandidateSecondaryVertices'),
-			genJetCollection = cms.InputTag( jetalgo+'GenJetsNoNu'),
+			#genJetCollection = cms.InputTag( ''),
 			pvSource = cms.InputTag( 'offlinePrimaryVertices' ), #'offlineSlimmedPrimaryVertices'),
 			jetTrackAssociation = True,
 
@@ -167,7 +170,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 	#getattr( proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userFloats.src += [jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:fullDiscriminant']
 	#getattr( proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userInts.src += [jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:cutbasedId',jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:fullId']
 
-	getattr(proc,'patJetPartons').particles = cms.InputTag( 'genParticles' ) #'prunedGenParticles')
+	#getattr(proc,'patJetPartons').particles = cms.InputTag( 'genParticles' ) #'prunedGenParticles')
 	setattr(proc, 'selectedPatJets'+jetALGO+'PF'+PUMethod, selectedPatJets.clone( src = 'patJets'+jetALGO+'PF'+PUMethod ) )
 	setattr(proc, jetSequence, jetSeq)
 
@@ -196,6 +199,11 @@ process.patJets.addTagInfos = True
 process.patJets.addAssociatedTracks = True
 
 process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducerBTag',
+    noiseSummary = cms.InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"),
+    noiseSummary_NoMinZ  =  cms.InputTag("HBHENoiseFilterResultProducerNoMinZ","HBHENoiseFilterResult"),
+    genParticles         =  cms.InputTag('genParticles'),
+    generator            =  cms.InputTag('generator'),
+    offlineBeamSpot = cms.InputTag('offlineBeamSpot'),
 	## jet collections ###########################
 	pfjets          = cms.InputTag('selectedPatJetsAK4PF'),
 	pfjetschs       = cms.InputTag('selectedPatJetsAK4PFCHS'),
@@ -203,7 +211,7 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducerBTag',
 	pfchsjetpuid    = cms.string('AK4PFCHSpileupJetIdEvaluator:fullDiscriminant'),
 	## MET collection ####
 	pfmet           = cms.InputTag('patMETs'),
-	genjets         = cms.untracked.InputTag('ak4GenJetsNoNu'),
+	genjets         = cms.InputTag('ak4GenJetsNoNu'),
 	## database entry for the uncertainties ######
 	PFPayloadName   = cms.string('AK4PF'),
 	PFPayloadNameCHS= cms.string('AK4PFchs'),
@@ -217,36 +225,37 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducerBTag',
 	## rho #######################################
 	srcCaloRho      = cms.InputTag('fixedGridRhoFastjetAllCalo'),
 	srcPFRho        = cms.InputTag('fixedGridRhoFastjetAll'),
-	srcPU           = cms.untracked.InputTag('addPileupInfo'),
+	srcPU           = cms.InputTag('addPileupInfo'),
 	## preselection cuts #########################
 	maxY            = cms.double(5.0),
 	minPFPt         = cms.double(20),
 	minNPFJets      = cms.int32(1),
 	minGenPt        = cms.untracked.double(20),
 	minJJMass       = cms.double(-1),
-        isMCarlo        = cms.untracked.bool(False),
-        useGenInfo      = cms.untracked.bool(False),
+    isMCarlo        = cms.untracked.bool(False),
+    useGenInfo      = cms.untracked.bool(False),
 	## trigger ###################################
 	printTriggerMenu = cms.untracked.bool(True),
 	processName     = cms.string('HLT'),
-	triggerName     = cms.vstring('HLT_PFJet40_v3','HLT_PFJet60_v3', 'HLT_PFJet80_v3', 'HLT_PFJet140_v3', 'HLT_PFJet200_v3', 'HLT_PFJet260_v3','HLT_PFJet320_v3', 'HLT_PFJet400_v3', 'HLT_PFJet450_v3','HLT_PFJet500_v3','HLT_PFHT600_v3','HLT_PFHT650_v3','HLT_PFHT800_v2','HLT_PFHT200_v2','HLT_PFHT250_v2','HLT_PFHT300_v2','HLT_PFHT350_v3','HLT_PFHT400_v2','HLT_PFHT475_v2','HLT_ZeroBias_v2','HLT_AK4PFJet30_v3','HLT_AK4PFJet50_v3','HLT_AK4PFJet80_v3','HLT_AK4PFJet100_v3'),
+	triggerName     = cms.vstring('HLT_PFJet40_v3','HLT_PFJet60_v3', 'HLT_PFJet80_v3', 'HLT_PFJet140_v3', 'HLT_PFJet200_v3', 'HLT_PFJet260_v3','HLT_PFJet320_v3', 'HLT_PFJet400_v3', 'HLT_PFJet450_v3','HLT_PFJet500_v3',
+								  'HLT_PFHT200_v2','HLT_PFHT250_v2','HLT_PFHT300_v2','HLT_PFHT350_v3','HLT_PFHT400_v2','HLT_PFHT475_v2','HLT_PFHT600_v3','HLT_PFHT650_v3','HLT_PFHT800_v2','HLT_ZeroBias_v2','HLT_AK4PFJet30_v3','HLT_AK4PFJet50_v3','HLT_AK4PFJet80_v3','HLT_AK4PFJet100_v3'),
 	triggerResults  = cms.InputTag("TriggerResults","","HLT"),
 	triggerEvent    = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
 	## jec services ##############################
 	#pfjecService    = cms.string('ak7PFL1FastL2L3Residual'),
 )
 
-jetToolbox( process, 'ak8', 'ak8JetSubs','CHS')
-jetToolbox( process, 'ak8', 'ak8JetSubs')
+# jetToolbox( process, 'ak8', 'ak8JetSubs','CHS')
+# jetToolbox( process, 'ak8', 'ak8JetSubs')
 
-process.ak8 = process.ak4.clone(
-	pfjets          = cms.InputTag('selectedPatJetsAK8PF'),
-	pfjetschs       = cms.InputTag('selectedPatJetsAK8PFCHS'),
-	pfpujetid       = cms.string('AK8PFpileupJetIdEvaluator:fullDiscriminant'),
-	pfchsjetpuid    = cms.string('AK8PFCHSpileupJetIdEvaluator:fullDiscriminant'),
-        PFPayloadName   = cms.string('AK8PF'),
-        PFPayloadNameCHS= cms.string('AK8PFchs'),
-)
+# process.ak8 = process.ak4.clone(
+# 	pfjets          = cms.InputTag('selectedPatJetsAK8PF'),
+# 	pfjetschs       = cms.InputTag('selectedPatJetsAK8PFCHS'),
+# 	pfpujetid       = cms.string('AK8PFpileupJetIdEvaluator:fullDiscriminant'),
+# 	pfchsjetpuid    = cms.string('AK8PFCHSpileupJetIdEvaluator:fullDiscriminant'),
+#         PFPayloadName   = cms.string('AK8PF'),
+#         PFPayloadNameCHS= cms.string('AK8PFchs'),
+# )
 
 jetToolbox( process, 'ak7', 'ak7JetSubs','CHS')
 jetToolbox( process, 'ak7', 'ak7JetSubs')
@@ -260,17 +269,17 @@ process.ak7 = process.ak4.clone(
         PFPayloadNameCHS= cms.string('AK7PFchs'),
 )
 
-jetToolbox( process, 'ak5', 'ak5JetSubs','CHS')
-jetToolbox( process, 'ak5', 'ak5JetSubs')
+# jetToolbox( process, 'ak5', 'ak5JetSubs','CHS')
+# jetToolbox( process, 'ak5', 'ak5JetSubs')
 
-process.ak5 = process.ak4.clone(
-	pfjets          = cms.InputTag('selectedPatJetsAK5PF'),
-	pfjetschs       = cms.InputTag('selectedPatJetsAK5PFCHS'),
-	pfpujetid       = cms.string('AK5PFpileupJetIdEvaluator:fullDiscriminant'),
-	pfchsjetpuid    = cms.string('AK5PFCHSpileupJetIdEvaluator:fullDiscriminant'),
-        PFPayloadName   = cms.string('AK5PF'),
-        PFPayloadNameCHS= cms.string('AK5PFchs'),
-)
+# process.ak5 = process.ak4.clone(
+# 	pfjets          = cms.InputTag('selectedPatJetsAK5PF'),
+# 	pfjetschs       = cms.InputTag('selectedPatJetsAK5PFCHS'),
+# 	pfpujetid       = cms.string('AK5PFpileupJetIdEvaluator:fullDiscriminant'),
+# 	pfchsjetpuid    = cms.string('AK5PFCHSpileupJetIdEvaluator:fullDiscriminant'),
+#         PFPayloadName   = cms.string('AK5PF'),
+#         PFPayloadNameCHS= cms.string('AK5PFchs'),
+# )
 
 ############# hlt filter #########################
 process.hltFilter = cms.EDFilter('HLTHighLevel',

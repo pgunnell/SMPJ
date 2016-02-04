@@ -6,5 +6,6 @@
   <class name="QCDPFJet"/>
   <class name="QCDEventHdr"/>
   <class name="QCDEvent"/>
+  <class name="QCDPFJetBTag"/>
 </selection>
 </lcgdict>
