@@ -35,6 +35,22 @@ void QCDEvent::setPFJetsCHS(const std::vector<QCDPFJet>& fPFJetsCHS)
     PFJetsCHS_.push_back(fPFJetsCHS[i]);
   }
 }
+//---------------------------------------------------                                                                                                                    
+void QCDEvent::setElectrons(const std::vector<MyElectron>& fElectrons)
+{
+  mElectron_.clear();
+  for(unsigned i=0;i<fElectrons.size();i++) {
+    mElectron_.push_back(fElectrons[i]);
+  }
+}
+//---------------------------------------------------                                                                                                                    
+void QCDEvent::setMuons(const std::vector<MyMuon>& fMuon)
+{
+  mMuon_.clear();
+  for(unsigned i=0;i<fMuon.size();i++) {
+    mMuon_.push_back(fMuon[i]);
+  }
+}
 //---------------------------------------------------
 
 //void QCDEvent::setFatJets(const std::vector<QCDJet>& fFatJets)

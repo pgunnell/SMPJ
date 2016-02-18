@@ -19,13 +19,59 @@
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Common/interface/TriggerResultsByName.h"
 
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/JetReco/interface/Jet.h"
+#include "DataFormats/JetReco/interface/PFJet.h"
+#include "DataFormats/JetReco/interface/PFJetCollection.h"
+#include "DataFormats/JetReco/interface/GenJet.h"
+#include "DataFormats/JetReco/interface/GenJetCollection.h"
+#include "DataFormats/JetReco/interface/JetExtendedAssociation.h"
+#include "DataFormats/JetReco/interface/JetID.h"
+#include "DataFormats/METReco/interface/HcalNoiseSummary.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
+#include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+#include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
+
+#include "PhysicsTools/PatUtils/interface/bJetSelector.h"
+#include "PhysicsTools/PatExamples/interface/BTagPerformance.h"
+#include "PhysicsTools/PatExamples/interface/PatBTagCommonHistos.h"
+
+#include "DataFormats/Math/interface/deltaR.h"
 
 ProcessedTreeProducerBTag::ProcessedTreeProducerBTag(edm::ParameterSet const& cfg):
-hltPrescale_(cfg, consumesCollector(), *this)
-
+  mOfflineVertices(mayConsume<reco::VertexCollection>(cfg.getParameter<edm::InputTag>("offlineVertices"))),
+  mBeamSpot(mayConsume<reco::BeamSpot>(cfg.getParameter<edm::InputTag>("beamSpot"))),
+  //mPFJetsName(mayConsume<pat::Jet>(cfg.getParameter<edm::InputTag>("pfjets"))),
+  //mPFJetsNameCHS(mayConsume<pat::Jet>(cfg.getParameter<edm::InputTag>("pfjetschs"))),
+  mSrcCaloRho(mayConsume<double>(cfg.getParameter<edm::InputTag>("srcCaloRho"))),
+  mSrcPFRho(mayConsume<double>(cfg.getParameter<edm::InputTag>("srcPFRho"))),
+  mPFMET(mayConsume<pat::METCollection>(cfg.getParameter<edm::InputTag>("pfmet"))),
+  mGenJetsName(mayConsume<GenJetCollection>(cfg.getUntrackedParameter<edm::InputTag>("genjets",edm::InputTag("")))),
+  triggerResultsTag_(mayConsume<edm::TriggerResults>(cfg.getParameter<edm::InputTag>("triggerResults"))),
+  triggerEventTag_(mayConsume<trigger::TriggerEvent>(cfg.getParameter<edm::InputTag>("triggerEvent"))),
+  mHBHENoiseFilterResultLabel(mayConsume<bool>(cfg.getParameter<edm::InputTag>("HBHENoiseFilterResultLabel"))),
+  mHBHENoiseFilterResultNoMinZLabel(mayConsume<bool>(cfg.getParameter<edm::InputTag>("HBHENoiseFilterResultNoMinZLabel"))),
+  mSrcPU(mayConsume<std::vector<PileupSummaryInfo> >(cfg.getUntrackedParameter<edm::InputTag>("srcPULabel"))),
+  hltPrescale_(cfg, consumesCollector(), *this)// ",edm::InputTag("addPileupInfo"))))
 {
 //  mPFJECservice      = cfg.getParameter<std::string>               ("pfjecService");
-  mPFPayloadName     = cfg.getParameter<std::string>               ("PFPayloadName");
+  mPFPayloadName = cfg.getParameter<std::string>("PFPayloadName");
   mPFPayloadNameCHS  = cfg.getParameter<std::string>               ("PFPayloadNameCHS");
   pfpujetid       = cfg.getParameter<std::string>               ("pfpujetid");
   pfchsjetpuid    = cfg.getParameter<std::string>               ("pfchsjetpuid");
@@ -35,32 +81,27 @@ hltPrescale_(cfg, consumesCollector(), *this)
   mMinJJMass         = cfg.getParameter<double>                    ("minJJMass");
   mMaxY              = cfg.getParameter<double>                    ("maxY");
   mMinNPFJets        = cfg.getParameter<int>                       ("minNPFJets");
-  mOfflineVertices   =(consumes<reco::VertexCollection>(cfg.getParameter<edm::InputTag>("offlineVertices")));
-  mPFJetsName = consumes<edm::View<pat::Jet> >(cfg.getParameter<edm::InputTag>("pfjets"));
-  mPFJetsNameCHS = consumes<edm::View<pat::Jet> >(cfg.getParameter<edm::InputTag>("pfjetschs"));
-  mSrcCaloRho = consumes<double >(cfg.getParameter<edm::InputTag>("srcCaloRho"));
-  mSrcPFRho = consumes<double >(cfg.getParameter<edm::InputTag>("srcPFRho"));
-  mPFMET             =(consumes<pat::METCollection>(cfg.getParameter<edm::InputTag>("pfmet")));
-  mSrcPU = consumes<std::vector<PileupSummaryInfo> >(cfg.getParameter<edm::InputTag>("srcPU"));
-  mGenJetsName = consumes<GenJetCollection >(cfg.getParameter<edm::InputTag>("genjets"));
+  //mOfflineVertices   = cfg.getParameter<edm::InputTag>             ("offlineVertices");
   mPrintTriggerMenu  = cfg.getUntrackedParameter<bool>             ("printTriggerMenu",false);
   mIsMCarlo          = cfg.getUntrackedParameter<bool>             ("isMCarlo",false);
   mUseGenInfo        = cfg.getUntrackedParameter<bool>             ("useGenInfo",false);
   mMinGenPt          = cfg.getUntrackedParameter<double>           ("minGenPt",30);
   processName_       = cfg.getParameter<std::string>               ("processName");
   triggerNames_      = cfg.getParameter<std::vector<std::string> > ("triggerName");
-  triggerResultsTag_ = consumes<edm::TriggerResults >(cfg.getParameter<edm::InputTag>("triggerResults"));
-  triggerEventTag_   = consumes<trigger::TriggerEvent >(cfg.getParameter<edm::InputTag>("triggerEvent"));
   mPFJECUncSrc       = cfg.getParameter<std::string>               ("jecUncSrc");
   mPFJECUncSrcCHS    = cfg.getParameter<std::string>               ("jecUncSrcCHS");
   mPFJECUncSrcNames  = cfg.getParameter<std::vector<std::string> > ("jecUncSrcNames");
-  mofflineBeamSpot   = consumes<reco::BeamSpot >(cfg.getParameter<edm::InputTag>("offlineBeamSpot"));
-  noiseSummaryToken  = consumes<bool >(cfg.getParameter<edm::InputTag>("noiseSummary"));
-  noiseSummary_NoMinZToken  = consumes<bool >(cfg.getParameter<edm::InputTag>("noiseSummary_NoMinZ"));
-  genParticlesToken  = consumes<reco::GenParticleCollection >(cfg.getParameter<edm::InputTag>("genParticles"));
-  generatorToken      = consumes<GenEventInfoProduct >(cfg.getParameter<edm::InputTag>("generator"));
-
-
+  mPFJetsName = consumes<edm::View<pat::Jet> >(cfg.getParameter<edm::InputTag>("pfjets"));
+  mPFJetsNameCHS = consumes<edm::View<pat::Jet> >(cfg.getParameter<edm::InputTag>("pfjetschs"));
+  mhEventInfo = consumes<GenEventInfoProduct>(cfg.getParameter<edm::InputTag>("EventInfo"));
+  mgenParticles = consumes<reco::GenParticleCollection>(cfg.getParameter<edm::InputTag>("GenParticles"));
+  //mPFJetsName        = cfg.getParameter<edm::InputTag>             ("pfjets");
+  //mPFJetsNameCHS     = cfg.getParameter<edm::InputTag>             ("pfjetschs");
+  //mSrcPU = cfg.getUntrackedParameter<edm::InputTag> ("srcPU",edm::InputTag("addPileupInfo"));
+  //triggerResultsTag_ = cfg.getParameter<edm::InputTag>             ("triggerResults");
+  //triggerEventTag_   = cfg.getParameter<edm::InputTag>             ("triggerEvent");
+  //New additions
+  //beamSpot_(consumes<reco::BeamSpot>(cfg.getParameter<std::string>("offlineBeamSpot")));
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void ProcessedTreeProducerBTag::beginJob()
@@ -69,11 +110,11 @@ void ProcessedTreeProducerBTag::beginJob()
   mEvent = new QCDEvent();
   mTree->Branch("events","QCDEvent",&mEvent);
   mTriggerNamesHisto = fs->make<TH1F>("TriggerNames","TriggerNames",1,0,1);
-  //mTriggerNamesHisto->SetBit(TH1::kCanRebin);
+  mTriggerNamesHisto->SetBit(TH1::kUserContour);
   for(unsigned i=0;i<triggerNames_.size();i++)
     mTriggerNamesHisto->Fill(triggerNames_[i].c_str(),1);
   mTriggerPassHisto = fs->make<TH1F>("TriggerPass","TriggerPass",1,0,1);
-  //mTriggerPassHisto->SetBit(TH1::kCanRebin);
+  mTriggerPassHisto->SetBit(TH1::kUserContour);
   isPFJecUncSet_ = false;
   isPFJecUncSetCHS_ = false;
 }
@@ -85,7 +126,7 @@ void ProcessedTreeProducerBTag::endJob()
 void ProcessedTreeProducerBTag::beginRun(edm::Run const & iRun, edm::EventSetup const& iSetup)
 {
   bool changed(true);
-  if (hltConfig_.init(iRun,iSetup,processName_,changed) && hltPrescale_.init(iRun, iSetup, processName_, changed)  ) {
+  if (hltConfig_.init(iRun,iSetup,processName_,changed) && hltPrescale_.init(iRun, iSetup, processName_, changed) ) {
     if (changed) {
       // check if trigger names in (new) config
       cout<<"New trigger menu found !!!"<<endl;
@@ -121,7 +162,6 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   QCDEventHdr mEvtHdr;
   QCDMET mPFMet;
 
-
   //-------------- Basic Event Info ------------------------------
   mEvtHdr.setRun(event.id().run());
   mEvtHdr.setEvt(event.id().event());
@@ -129,7 +169,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   mEvtHdr.setBunch(event.bunchCrossing());
   //-------------- Beam Spot --------------------------------------
   Handle<reco::BeamSpot> beamSpot;
-  event.getByToken(mofflineBeamSpot, beamSpot);
+  event.getByToken(mBeamSpot,beamSpot);
   if (beamSpot.isValid())
     mEvtHdr.setBS(beamSpot->x0(),beamSpot->y0(),beamSpot->z0());
   else
@@ -137,22 +177,23 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 
 
   //-------------- HCAL Noise Summary -----------------------------
-  edm::Handle<bool> noiseSummary;
-  edm::Handle<bool> noiseSummary_NoMinZ;
+  Handle<bool> noiseSummary;
+  Handle<bool> noiseSummary_NoMinZ;
 
   if (!mIsMCarlo) {
-   event.getByToken(noiseSummaryToken, noiseSummary);
-   mEvtHdr.setHCALNoise(*noiseSummary);
-   event.getByToken(noiseSummary_NoMinZToken, noiseSummary_NoMinZ);
-   mEvtHdr.setHCALNoiseNoMinZ(*noiseSummary_NoMinZ);
+    // event.getByLabel(mHBHENoiseFilter,noiseSummary);
+    event.getByToken(mHBHENoiseFilterResultLabel, noiseSummary);
+    //event.getByToken(mHBHENoiseFilterResultProducer, noiseSummary);
+    mEvtHdr.setHCALNoise(*noiseSummary);
 
+    event.getByToken(mHBHENoiseFilterResultNoMinZLabel, noiseSummary_NoMinZ);
+    mEvtHdr.setHCALNoiseNoMinZ(*noiseSummary_NoMinZ);
+    
   }
   else{ 
    mEvtHdr.setHCALNoise(true);
    mEvtHdr.setHCALNoiseNoMinZ(true);
   }
-
-
   //-------------- Trigger Info -----------------------------------
   event.getByToken(triggerResultsTag_,triggerResultsHandle_);
   if (!triggerResultsHandle_.isValid()) {
@@ -164,11 +205,10 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
     cout << "ProcessedTreeProducerBTag::analyze: Error in getting TriggerEvent product from Event!" << endl;
     return;
   }
-
   vector<int> L1Prescales,HLTPrescales,Fired;
   vector<vector<LorentzVector> > mL1Objects,mHLTObjects;
   // sanity check
-  //assert(triggerResultsHandle_->size() == hltConfig_.size());
+  assert(triggerResultsHandle_->size() == hltConfig_.size());
   //------ loop over all trigger names ---------
   for(unsigned itrig=0;itrig<triggerNames_.size() && !mIsMCarlo;itrig++) {
     bool accept(false);
@@ -178,36 +218,34 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
     vector<LorentzVector> vvL1,vvHLT;
     if (triggerIndex_[itrig] < hltConfig_.size()) {
       accept = triggerResultsHandle_->accept(triggerIndex_[itrig]);
-      //const std::pair<int,int> prescales(hltPrescale_.prescaleValues(event,iSetup,triggerNames_[itrig]));
+      //      const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));
 
- //const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));    //      const std::pair<int,int> prescales(hltConfig_.prescaleValues(event,iSetup,triggerNames_[itrig]));
-       //preL1    = prescales.first;    
-       //preHLT   = prescales.second;
-///In detail
-		//get prescale info from hltConfig_
-	std::pair<std::vector<std::pair<std::string,int> >,int> detailedPrescaleInfo = hltPrescale_.prescaleValuesInDetail(event, iSetup, triggerNames_[itrig]);	 
-	preHLT = detailedPrescaleInfo.second ;
+      ///In detail
+      //get prescale info from hltConfig_
+      
+      std::pair<std::vector<std::pair<std::string,int> >,int> detailedPrescaleInfo = hltPrescale_.prescaleValuesInDetail(event, iSetup, triggerNames_[itrig]);	 
+      preHLT = detailedPrescaleInfo.second ;
 
-	// save l1 prescale values in standalone vector
-	std::vector <int> l1prescalevals;
-	for( size_t varind = 0; varind < detailedPrescaleInfo.first.size(); varind++ ){
-     l1prescalevals.push_back(detailedPrescaleInfo.first.at(varind).second);
-	}
-
-
-	// find and save minimum l1 prescale of any ORed L1 that seeds the HLT
- 	std::vector<int>::iterator result = std::min_element(std::begin(l1prescalevals), std::end(l1prescalevals));
-	size_t minind = std::distance(std::begin(l1prescalevals), result);
-	// sometimes there are no L1s associated with a HLT. In that case, this branch stores -1 for the l1prescale
-      preL1 = minind < l1prescalevals.size() ? l1prescalevals.at(minind) : -1 ;
-///end in detail
-    
+      // save l1 prescale values in standalone vector
+      std::vector <int> l1prescalevals;
+      for( size_t varind = 0; varind < detailedPrescaleInfo.first.size(); varind++ ){
+	l1prescalevals.push_back(detailedPrescaleInfo.first.at(varind).second);
+      }
+   
+      //find and save minimum l1 prescale of any ORed L1 that seeds the HLT
+      std::vector<int>::iterator result = std::min_element(std::begin(l1prescalevals), std::end(l1prescalevals));
+      size_t minind = std::distance(std::begin(l1prescalevals), result);
+      // sometimes there are no L1s associated with a HLT. In that case, this branch stores -1 for the l1prescale
+      preL1 = minind < l1prescalevals.size() ? l1prescalevals.at(minind) : -1 ;//commented for 76X
+      
+      ///end in detail
       if (!accept)
         tmpFired = 0;
       else {
         mTriggerPassHisto->Fill(triggerNames_[itrig].c_str(),1);
         tmpFired = 1;
       }
+
       //--------- modules on this trigger path--------------
       const vector<string>& moduleLabels(hltConfig_.moduleLabels(triggerIndex_[itrig]));
       const unsigned int moduleIndex(triggerResultsHandle_->index(triggerIndex_[itrig]));
@@ -296,8 +334,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   //-------------- Simulated PU Info ----------------------------------
   Handle<std::vector<PileupSummaryInfo> > PupInfo;
   if (mIsMCarlo && mUseGenInfo) {
-    //event.getByToken("generator", hEventInfo);
-    event.getByToken(generatorToken, hEventInfo);
+    event.getByToken(mhEventInfo, hEventInfo);
     if(hEventInfo->hasBinningValues())
     mEvtHdr.setPthat(hEventInfo->binningValues()[0]);
     else
@@ -373,12 +410,12 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
   }
   
   //----------- PFJets non CHS part -------------------------
-  
+
   edm::Handle<edm::View<pat::Jet> > patjets;
   event.getByToken(mPFJetsName,patjets);
   
   /*edm::Handle<reco::JetTagCollection> btagDiscriminators;
-    event.getByToken("pfCombinedInclusiveSecondaryVertexV2BJetTags", btagDiscriminators);  */
+    event.getByLabel("pfCombinedInclusiveSecondaryVertexV2BJetTags", btagDiscriminators);  */
   
   for(edm::View<pat::Jet>::const_iterator i_pfjet=patjets->begin(); i_pfjet!=patjets->end(); ++i_pfjet)
     {
@@ -506,6 +543,11 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 	
 	double CSVpfPositive = i_pfjet->bDiscriminator("pfPositiveCombinedSecondaryVertexBJetTags");
 	double CSVpfNegative = i_pfjet->bDiscriminator("pfNegativeCombinedSecondaryVertexBJetTags");
+
+	//the three recommended
+	double pfJetProbabilityBJetTags=i_pfjet->bDiscriminator("pfJetProbabilityBJetTags");
+	double pfCombinedInclusiveSecondaryVertexV2BJetTags= i_pfjet->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+	double pfCombinedMVAV2BJetTags=i_pfjet->bDiscriminator("pfCombinedMVAV2BJetTags");
 	
 	qcdpfjet.setLooseID(looseID);
 	qcdpfjet.setTightID(tightID);
@@ -513,7 +555,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 	qcdpfjet.setMulti(npr,chm,nhm,phm,elm,mum);
 	qcdpfjet.setHFFrac(hf_hf,hf_phf);
 	qcdpfjet.setHFMulti(hf_hm,hf_phm);
-      	
+
 	float partonFlavour=-100;
 	float hadronFlavour=-100;
 	
@@ -536,6 +578,7 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 	qcdpfjet.setSimpleSecondaryVertexTag(SimpleSecVertexHE,SimpleSecVertexHP,SimpleSecVertexHEpf,SimpleSecVertexHPpf);
 	qcdpfjet.setCombinedSecondaryVertexTag(CSV,CSVpf,CinclSVpf,CSVSoftLeptonpf,CMVApf);
 	qcdpfjet.setPositiveNegativeCSV(CSVpfPositive,CSVpfNegative);
+	qcdpfjet.setTagRecommended(pfJetProbabilityBJetTags,pfCombinedInclusiveSecondaryVertexV2BJetTags,pfCombinedMVAV2BJetTags);
 	
 	float pileupJetId = -999;
 	if ( i_pfjet->hasUserFloat(pfpujetid) )    pileupJetId = i_pfjet->userFloat(pfpujetid);
@@ -731,6 +774,12 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 	 double CSVpfPositive = i_pfjetchs->bDiscriminator("pfPositiveCombinedSecondaryVertexBJetTags");
 	 double CSVpfNegative = i_pfjetchs->bDiscriminator("pfNegativeCombinedSecondaryVertexBJetTags");
 	 
+	 //the three recommended                                                                                                                                        
+	 
+	 double pfJetProbabilityBJetTags=i_pfjetchs->bDiscriminator("pfJetProbabilityBJetTags");
+	 double pfCombinedInclusiveSecondaryVertexV2BJetTags= i_pfjetchs->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+	 double pfCombinedMVAV2BJetTags=i_pfjetchs->bDiscriminator("pfCombinedMVAV2BJetTags");
+
 	 float partonFlavour=-100;
 	 float hadronFlavour=-100;
 	 
@@ -747,7 +796,8 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 	 qcdpfjetchs.setSimpleSecondaryVertexTag(SimpleSecVertexHE,SimpleSecVertexHP,SimpleSecVertexHEpf,SimpleSecVertexHPpf);
 	 qcdpfjetchs.setCombinedSecondaryVertexTag(CSV,CSVpf,CinclSVpf,CSVSoftLeptonpf,CMVApf);
 	 qcdpfjetchs.setPositiveNegativeCSV(CSVpfPositive,CSVpfNegative);
-	 
+	 qcdpfjetchs.setTagRecommended(pfJetProbabilityBJetTags,pfCombinedInclusiveSecondaryVertexV2BJetTags,pfCombinedMVAV2BJetTags);
+
 	 float pileupJetId = -999;
 	 if ( i_pfjetchs->hasUserFloat(pfchsjetpuid) )   {  pileupJetId = i_pfjetchs->userFloat(pfchsjetpuid);}
 	 qcdpfjetchs.SetPUJetId(pileupJetId);
@@ -823,8 +873,7 @@ int ProcessedTreeProducerBTag::getMatchedPartonGen(edm::Event const& event,GenJe
   bool switchC=0;
 
   edm::Handle<reco::GenParticleCollection> genParticles;
-  //event.getByToken ("genParticles", genParticles);
-  event.getByToken (genParticlesToken, genParticles);
+  event.getByToken(mgenParticles, genParticles);
 
   for (size_t i = 0; i < genParticles->size (); ++i) {
       const GenParticle & genIt = (*genParticles)[i];
@@ -855,8 +904,7 @@ int ProcessedTreeProducerBTag::getMatchedHadronGen(edm::Event const& event,GenJe
   int jetFlavour=-100;
 
   edm::Handle<reco::GenParticleCollection> genParticles;
-  //event.getByToken ("genParticles", genParticles);
-  event.getByToken (genParticlesToken, genParticles);
+  event.getByToken(mgenParticles, genParticles);
 
   for (size_t i = 0; i < genParticles->size (); ++i) {
     const GenParticle & genIt = (*genParticles)[i];

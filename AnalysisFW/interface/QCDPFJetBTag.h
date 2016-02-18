@@ -19,6 +19,8 @@ class QCDPFJetBTag : public QCDJet {
 
      void setPositiveNegativeCSV(float fcsvpfpositive, float fcsvpfnegative) { CSVpfPositive_ = fcsvpfpositive; CSVpfNegative_ = fcsvpfnegative;}
 
+     void setTagRecommended(float recommend1, float recommend2, float recommend3) { recommend1_ = recommend1; recommend2_ = recommend2; recommend3_ = recommend3; } 
+
      void setFlavour(float fpartonflavour, float fhadronflavour) {partonFlavour_ = fpartonflavour; hadronFlavour_ = fhadronflavour;}
 
      //------------ Get methods ------------------------------
@@ -46,6 +48,10 @@ class QCDPFJetBTag : public QCDJet {
      float partonflavour()      const {return partonFlavour_;}
      float hadronflavour()      const {return hadronFlavour_;}
 
+     float pfJetProbabilityBJetTags() const {return recommend1_;}
+     float pfCombinedInclusiveSecondaryVertexV2BJetTags() const {return recommend2_;}
+     float pfCombinedMVAV2BJetTags() const {return recommend2_;}
+
    private:
      float TCHE_;
      float TCHP_;
@@ -69,6 +75,9 @@ class QCDPFJetBTag : public QCDJet {
 
      float partonFlavour_;
      float hadronFlavour_;
+     float recommend1_;
+     float recommend2_;
+     float recommend3_;
 
     };
 #endif
