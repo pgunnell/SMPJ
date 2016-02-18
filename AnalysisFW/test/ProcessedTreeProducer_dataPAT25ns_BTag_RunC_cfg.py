@@ -56,17 +56,18 @@ inFiles = cms.untracked.vstring(
 #'root://xrootd.unl.edu//store/data/Run2015C/JetHT/AOD/PromptReco-v1/000/253/890/00000/24D029CE-2741-E511-B0AF-02163E014604.root'
 #'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/674/00000/36D872F3-F95E-E511-870B-02163E013539.root'
 #'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/729/00000/5C1F5529-F65F-E511-9B8C-02163E0145D9.root'
-'file:2E97A695-7DA8-E511-AB7C-001D09FDD6AB.root'
+'root://xrootd.unl.edu//store/data/Run2015C/JetHT/AOD/PromptReco-v1/000/253/890/00000/24D029CE-2741-E511-B0AF-02163E014604.root'
    )
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10000))
 process.source = cms.Source("PoolSource", fileNames = inFiles )
 
 def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = None):
 
 	JETCorrPayload='None'
 	JETCorrLevels = [ 'None' ]
-	bTagDiscriminators = ['trackCountingHighEffBJetTags','trackCountingHighPurBJetTags','pfTrackCountingHighEffBJetTags','pfTrackCountingHighPurBJetTags','softPFMuonByIP3dBJetTags','softPFElectronByIP3dBJetTags','softPFMuonBJetTags','softPFElectronBJetTags','simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags','pfSimpleSecondaryVertexHighEffBJetTags','pfSimpleSecondaryVertexHighPurBJetTags','combinedSecondaryVertexBJetTags','pfCombinedSecondaryVertexSoftLeptonBJetTags','pfPositiveCombinedSecondaryVertexBJetTags','pfNegativeCombinedSecondaryVertexBJetTags','pfCombinedInclusiveSecondaryVertexV2BJetTags','pfCombinedMVAV2BJetTags','pfJetProbabilityBJetTags']
+	bTagDiscriminators = ['trackCountingHighEffBJetTags','trackCountingHighPurBJetTags','pfTrackCountingHighEffBJetTags','pfTrackCountingHighPurBJetTags','softPFMuonByIP3dBJetTags','softPFElectronByIP3dBJetTags','softPFMuonBJetTags','softPFElectronBJetTags','simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags','pfSimpleSecondaryVertexHighEffBJetTags','pfSimpleSecondaryVertexHighPurBJetTags','combinedSecondaryVertexBJetTags','pfCombinedSecondaryVertexSoftLeptonBJetTags','pfPositiveCombinedSecondaryVertexBJetTags','pfNegativeCombinedSecondaryVertexBJetTags']
+#,'pfCombinedSecondaryVertexBJetTags','pfCombinedMVABJetTags','pfCombinedSecondaryVertexSoftLeptonBJetTags','pfPositiveCombinedSecondaryVertexBJetTags','pfNegativeCombinedSecondaryVertexBJetTags']
 #,'pfCombinedInclusiveSecondaryVertexBJetTags'
 
 	#GetJetMCFlavour = ['True']
@@ -230,7 +231,7 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducerBTag',
 	## trigger ###################################
 	printTriggerMenu = cms.untracked.bool(True),
 	processName     = cms.string('HLT'),
-	triggerName     = cms.vstring('HLT_PFJet40_v3','HLT_PFJet60_v3', 'HLT_PFJet80_v3', 'HLT_PFJet140_v3', 'HLT_PFJet200_v3', 'HLT_PFJet260_v3','HLT_PFJet320_v3', 'HLT_PFJet400_v3', 'HLT_PFJet450_v3','HLT_PFJet500_v3','HLT_PFHT600_v3','HLT_PFHT650_v3','HLT_PFHT800_v2','HLT_PFHT200_v2','HLT_PFHT250_v2','HLT_PFHT300_v2','HLT_PFHT350_v3','HLT_PFHT400_v2','HLT_PFHT475_v2','HLT_ZeroBias_v2','HLT_AK4PFJet30_v3','HLT_AK4PFJet50_v3','HLT_AK4PFJet80_v3','HLT_AK4PFJet100_v3','HLT_PFJet40_v4','HLT_PFJet60_v4', 'HLT_PFJet80_v4', 'HLT_PFJet140_v4', 'HLT_PFJet200_v4', 'HLT_PFJet260_v4','HLT_PFJet320_v4', 'HLT_PFJet400_v4', 'HLT_PFJet450_v4','HLT_PFJet500_v4'),
+        triggerName     = cms.vstring('HLT_PFJet40_v2','HLT_PFJet60_v2', 'HLT_PFJet80_v2', 'HLT_PFJet140_v2', 'HLT_PFJet200_v2', 'HLT_PFJet260_v2','HLT_PFJet320_v2', 'HLT_PFJet400_v2', 'HLT_PFJet450_v2','HLT_PFJet500_v2','HLT_PFHT600_v2','HLT_PFHT650_v2','HLT_PFHT800_v1','HLT_PFHT200_v1','HLT_PFHT250_v1','HLT_PFHT300_v1','HLT_PFHT350_v2','HLT_PFHT400_v1','HLT_PFHT475_v1','HLT_ZeroBias_v2'),
 	triggerResults  = cms.InputTag("TriggerResults","","HLT"),
 	triggerEvent    = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
 	## jec services ##############################
