@@ -9,14 +9,14 @@
 class QCDPFJet : public QCDPFJetBTag {
    public:
      //------------ Constructor ------------------------------
-     QCDPFJet() {chf_=0;nhf_=0;nemf_=0;cemf_=0;muf_=0;chm_=0;nhm_=0;phm_=0;elm_=0;mum_=0;
+     QCDPFJet() {chf_=0;nhf_=0;nemf_=0;cemf_=0;muf_=0;chm_=0;nhm_=0;phm_=0;elm_=0;mum_=0,cm_=0;
 //     pfParticles_.clear();
      }
      //------------ Destructor -------------------------------
      ~QCDPFJet() {}
      //------------ Set methods ------------------------------
      void setFrac(float fchf, float fnhf, float fnemf, float fcemf, float fmuf)  {chf_ = fchf; nhf_ = fnhf; nemf_ = fnemf; cemf_ = fcemf; muf_ = fmuf;}
-     void setMulti(int fncand, int fchm, int fnhm, int fphm, int felm, int fmum) {ncand_ = fncand; chm_ = fchm; nhm_ = fnhm; phm_ = fphm; elm_ = felm; mum_ = fmum;}
+     void setMulti(int fncand, int fchm, int fnhm, int fphm, int felm, int fmum, int fcm) {ncand_ = fncand; chm_ = fchm; nhm_ = fnhm; phm_ = fphm; elm_ = felm; mum_ = fmum; cm_ = fcm; }
      void setBeta(float fbeta) {beta_ = fbeta;}
      void setBetaStar(float fbetaStar) {betaStar_ = fbetaStar;}
      void setHFFrac(float fhf_hf, float fhf_phf) {hf_hf_ = fhf_hf; hf_phf_ = fhf_phf;}
@@ -98,6 +98,8 @@ class QCDPFJet : public QCDPFJetBTag {
      int mum_;
      //---- number of PF candidates -----------
      int ncand_;
+     // --- charged multiplicity ------
+     int cm_;
      //---- fraction of track pt coming from the signal vertex ---
      float beta_;
      //---- fraction of track pt NOT coming from the signal vertex ---

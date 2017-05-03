@@ -21,6 +21,17 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+
+//Hadron level definition
+#include "SimDataFormats/JetMatching/interface/JetFlavourInfo.h"              
+#include "SimDataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 using namespace edm;
 using namespace reco;
@@ -44,9 +55,11 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
     }
     //---- configurable parameters --------
     bool   mIsMCarlo;
+    bool   mAK4;
     bool   mUseGenInfo;
     bool   mPrintTriggerMenu;
-    bool   isPFJecUncSet_,isPFJecUncSetCHS_;
+    //bool   isPFJecUncSet_ 
+    bool   isPFJecUncSetCHS_;
     int    mGoodVtxNdof,mMinNPFJets;
     double mGoodVtxZ;
     double mMinPFPt,mMinPFFatPt,mMaxPFFatEta,mMinGenPt,mMaxY,mMinJJMass;
@@ -54,43 +67,58 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
     std::string mPFPayloadName;
     std::string mPFPayloadNameCHS;
     std::string pfpujetid;
-	std::string pfchsjetpuid;
+    std::string pfchsjetpuid;
 
     // unc file for non CHS jet ---- //
-    std::string mPFJECUncSrc;
+    //std::string mPFJECUncSrc;
     // unc file for CHS jet ---- //
     std::string mPFJECUncSrcCHS;
     std::vector<std::string> mPFJECUncSrcNames;
     std::vector<std::string> mBDiscriminators;
     // ---- non CHS jet input tag ----- //
-    edm::InputTag mPFJetsName;
+    edm::EDGetTokenT<reco::VertexCollection> mOfflineVertices;
+    edm::EDGetTokenT<reco::BeamSpot> mBeamSpot;
+    //edm::EDGetTokenT<edm::View<pat::Jet> >mPFJetsName;
+    edm::EDGetTokenT<edm::View<pat::Jet> >mPFJetsNameCHS;
+    edm::EDGetTokenT<GenEventInfoProduct> mhEventInfo;
+    edm::EDGetTokenT<edm::ValueMap<float>> qgToken;
     // ----CHS jet input tag ----- //
-    edm::InputTag mPFJetsNameCHS;
-    edm::InputTag mGenJetsName;
-    edm::InputTag mOfflineVertices;
-    edm::InputTag mSrcCaloRho;
-    edm::InputTag mSrcPFRho;
-    edm::InputTag mSrcPU;
+    //edm::InputTag mPFJetsName;
+    //edm::InputTag mPFJetsNameCHS;
+
+    edm::EDGetTokenT<double> mSrcCaloRho;
+    edm::EDGetTokenT<double> mSrcPFRho;
+    //edm::InputTag triggerResultsTag_;
+    //edm::InputTag triggerEventTag_;
     //edm::InputTag mPFMET;
     edm::EDGetTokenT<pat::METCollection> mPFMET;
+    edm::EDGetTokenT<GenJetCollection> mGenJetsName;
+    edm::EDGetTokenT<reco::GenParticleCollection> mgenParticles;
     //edm::InputTag mHBHENoiseFilter;
     //---- TRIGGER -------------------------
     std::string   processName_;
     std::vector<std::string> triggerNames_;
     std::vector<unsigned int> triggerIndex_;
-    edm::InputTag triggerResultsTag_;
-    edm::InputTag triggerEventTag_;
+    //edm::InputTag mSrcPU;
+    edm::EDGetTokenT<edm::TriggerResults> triggerResultsTag_;
+    edm::EDGetTokenT<trigger::TriggerEvent> triggerEventTag_;
+    edm::EDGetTokenT<bool> mHBHENoiseFilterResultLabel;
+    edm::EDGetTokenT<bool> mHBHENoiseFilterResultNoMinZLabel;
+    edm::EDGetTokenT<std::vector<PileupSummaryInfo> > mSrcPU;
     edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
     edm::Handle<trigger::TriggerEvent> triggerEventHandle_;
+    //hadron jet definition
+    edm::EDGetTokenT<reco::JetFlavourInfoMatchingCollection> jetFlavourInfosToken_;
+
     HLTConfigProvider hltConfig_;
     //---- CORRECTORS ----------------------
     const JetCorrector *mPFJEC;
     // ---- non CHS jet uncertainty ------ //
-    JetCorrectionUncertainty *mPFUnc;
+    //JetCorrectionUncertainty *mPFUnc;
     // ---- non CHS jet uncertainty ------ //
     JetCorrectionUncertainty *mPFUncCHS;
     //------- non CHS jet uncertainty sources -------- //
-    std::vector<JetCorrectionUncertainty*> mPFUncSrc;
+    //std::vector<JetCorrectionUncertainty*> mPFUncSrc;
     // -------- CHS jet uncertainty sources -------- //
     std::vector<JetCorrectionUncertainty*> mPFUncSrcCHS;
 
@@ -102,6 +130,8 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
 
     int getMatchedPartonGen(edm::Event const& event, GenJetCollection::const_iterator i_gen);
     int getMatchedHadronGen(edm::Event const& event, GenJetCollection::const_iterator i_gen);
+
+    HLTPrescaleProvider hltPrescale_;
 
 };
 

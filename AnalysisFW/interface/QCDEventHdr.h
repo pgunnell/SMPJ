@@ -12,7 +12,7 @@ class QCDEventHdr
       ~QCDEventHdr() {}
       //------------ Set methods ------------------------------
       void setRun(int fRun)                                  {mRun   = fRun;}
-      void setEvt(int fEvt)                                  {mEvent = fEvt;}
+      void setEvt(long long int fEvt)                                  {mEvent = fEvt;}
       void setLumi(int fLumi)                                {mLumi  = fLumi;}
       void setBunch(int fBunch)                              {mBunch = fBunch;}
       void setPthat(float fPthat)                            {mPthat = fPthat;}
@@ -27,7 +27,7 @@ class QCDEventHdr
       void setTrPu(float fTrPu) {mTrPu = fTrPu;} // setting the true PU 
       //------------ Get methods ------------------------------
       int runNo()           const {return mRun;} 
-      int event()           const {return mEvent;} 
+      long long int event()           const {return mEvent;} 
       int lumi()            const {return mLumi;}
       int bunch()           const {return mBunch;}
       int nVtx()            const {return mNVtx;}
@@ -62,7 +62,7 @@ class QCDEventHdr
         //---- run number ----------------------------- 
         int mRun;
         //---- event number ---------------------------
-        int mEvent; 
+        long long int mEvent; 
         //---- lumi section ---------------------------
         int mLumi;
         //---- bunch crossing -------------------------
