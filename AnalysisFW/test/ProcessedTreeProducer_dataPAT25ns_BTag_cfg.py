@@ -237,7 +237,7 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducerBTag',
 	srcPULabel      = cms.untracked.InputTag('addPileupInfo','addPileupInfo'),
 	## preselection cuts #########################
 	maxY            = cms.double(5.0),
-	minPFPt         = cms.double(20),
+	minPFPt         = cms.double(5.0),
 	minNPFJets      = cms.int32(1),
 	minGenPt        = cms.untracked.double(20),
 	minJJMass       = cms.double(-1),
@@ -357,6 +357,7 @@ process.allMetFilterPaths=cms.Sequence(process.HBHENoiseFilter*process.HBHENoise
 process.load('PhysicsTools.PatAlgos.recoLayer0.metCorrections_cff')
 process.load('PhysicsTools.PatAlgos.producersLayer1.metProducer_cfi')
 process.patMETs.addGenMET = cms.bool(False)
+process.patMETs.metSource = cms.InputTag("pfChMet")
 
 #Try scheduled processs
 process.path = cms.Path(process.goodVertices*process.trackingFailureFilter*
