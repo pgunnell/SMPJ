@@ -15,7 +15,6 @@
 #include "SMPJ/AnalysisFW/interface/QCDEvent.h"
 #include "SMPJ/AnalysisFW/interface/QCDEventHdr.h"
 #include "SMPJ/AnalysisFW/interface/QCDPFJet.h"
-#include "SMPJ/AnalysisFW/interface/QCDPFJetBTag.h"
 #include "SMPJ/AnalysisFW/interface/QCDMET.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -24,9 +23,18 @@
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/LHERunInfoProduct.h"
 
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
+
+//Hadron level definition
+#include "SimDataFormats/JetMatching/interface/JetFlavourInfo.h"              
+#include "SimDataFormats/JetMatching/interface/JetFlavourInfoMatching.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 using namespace edm;
 using namespace reco;
@@ -50,39 +58,23 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
     }
     //---- configurable parameters --------
     bool   mIsMCarlo;
+    bool   mAK4;
     bool   mUseGenInfo;
     bool   mPrintTriggerMenu;
-    bool   isPFJecUncSet_,isPFJecUncSetCHS_;
     int    mGoodVtxNdof,mMinNPFJets;
     double mGoodVtxZ;
-    double mMinPFPt,mMinPFFatPt,mMaxPFFatEta,mMinGenPt,mMaxY,mMinJJMass;
-    std::string mPFJECservice;
-    std::string mPFPayloadName;
-    std::string mPFPayloadNameCHS;
-    std::string pfpujetid;
+    double mMinPFPt,mMinGenPt,mMaxY;
     std::string pfchsjetpuid;
 
-    // unc file for non CHS jet ---- //
-    std::string mPFJECUncSrc;
-    // unc file for CHS jet ---- //
-    std::string mPFJECUncSrcCHS;
-    std::vector<std::string> mPFJECUncSrcNames;
-    std::vector<std::string> mBDiscriminators;
     // ---- non CHS jet input tag ----- //
     edm::EDGetTokenT<reco::VertexCollection> mOfflineVertices;
     edm::EDGetTokenT<reco::BeamSpot> mBeamSpot;
-    edm::EDGetTokenT<edm::View<pat::Jet> >mPFJetsName;
     edm::EDGetTokenT<edm::View<pat::Jet> >mPFJetsNameCHS;
     edm::EDGetTokenT<GenEventInfoProduct> mhEventInfo;
+    edm::EDGetTokenT<edm::ValueMap<float>> qgToken;
     // ----CHS jet input tag ----- //
-    //edm::InputTag mPFJetsName;
-    //edm::InputTag mPFJetsNameCHS;
-
     edm::EDGetTokenT<double> mSrcCaloRho;
     edm::EDGetTokenT<double> mSrcPFRho;
-    //edm::InputTag triggerResultsTag_;
-    //edm::InputTag triggerEventTag_;
-    //edm::InputTag mPFMET;
     edm::EDGetTokenT<pat::METCollection> mPFMET;
     edm::EDGetTokenT<GenJetCollection> mGenJetsName;
     edm::EDGetTokenT<reco::GenParticleCollection> mgenParticles;
@@ -94,18 +86,35 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
     //edm::InputTag mSrcPU;
     edm::EDGetTokenT<edm::TriggerResults> triggerResultsTag_;
     edm::EDGetTokenT<trigger::TriggerEvent> triggerEventTag_;
-    edm::EDGetTokenT<bool> mHBHENoiseFilterResultLabel;
-    edm::EDGetTokenT<bool> mHBHENoiseFilterResultNoMinZLabel;
     edm::EDGetTokenT<std::vector<PileupSummaryInfo> > mSrcPU;
     edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
     edm::Handle<trigger::TriggerEvent> triggerEventHandle_;
+
+    edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
+    edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
+    edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
+    edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescalesL1Min_;
+    edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescalesL1Max_;
+
+    edm::EDGetTokenT<GenEventInfoProduct> genEvtInfoToken;
+    edm::EDGetTokenT<LHEEventProduct> lheEvtInfoToken;
+
+    edm::Handle<GenEventInfoProduct> genEvtInfo;
+    edm::Handle<LHEEventProduct> lheEvtInfo;
+
+    //hadron jet definition
+    edm::EDGetTokenT<reco::JetFlavourInfoMatchingCollection> jetFlavourInfosToken_;
+
+    std::string mPFJECUncSrcCHS;
+    std::vector<std::string> mPFJECUncSrcNames;
+    std::string mPFPayloadNameCHS;
+
+    bool saveWeights_;
+
     HLTConfigProvider hltConfig_;
     //---- CORRECTORS ----------------------
-    const JetCorrector *mPFJEC;
-    // ---- non CHS jet uncertainty ------ //
-    JetCorrectionUncertainty *mPFUnc;
-    // ---- non CHS jet uncertainty ------ //
     JetCorrectionUncertainty *mPFUncCHS;
+
     //------- non CHS jet uncertainty sources -------- //
     std::vector<JetCorrectionUncertainty*> mPFUncSrc;
     // -------- CHS jet uncertainty sources -------- //

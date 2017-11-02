@@ -4,9 +4,8 @@
 #ifndef QCDPFJet_h
 #define QCDPFJet_h
 #include "SMPJ/AnalysisFW/interface/QCDJet.h"
-#include "SMPJ/AnalysisFW/interface/QCDPFJetBTag.h"
 #include "TLorentzVector.h"
-class QCDPFJet : public QCDPFJetBTag {
+class QCDPFJet : public QCDJet {
    public:
      //------------ Constructor ------------------------------
      QCDPFJet() {chf_=0;nhf_=0;nemf_=0;cemf_=0;muf_=0;chm_=0;nhm_=0;phm_=0;elm_=0;mum_=0;
@@ -24,17 +23,24 @@ class QCDPFJet : public QCDPFJetBTag {
      void setVtxInfo(int mpuTrk, int mlvTrk, int mjtTrk) { mpuTrk_ = mpuTrk; mlvTrk_ = mlvTrk; mjtTrk_ = mjtTrk;} // Juska
      void setHO(float hof) {hof_ = hof;} // Juska
      void SetPUJetId(float pujid) { pujid_ = pujid; }
-     void SetCaloJetPt(float calojetpt) { calojetpt_ = calojetpt; }
-     void SetCaloJetEf(float calojetef) { calojetef_ = calojetef; }   
 
-    /*
-     void setPFParticles(std::vector<LorentzVector>& fpfFParticles) {
-      for(unsigned i=0; i<fpfFParticles.size(); i++)
-       {
-        pfParticles_.push_back(fpfFParticles[i]);
-      }
-     } // setPFParticles
-     */
+     void setTagRecommended(float recommend1, float recommend2, float recommend3) { recommend1_ = recommend1; recommend2_ = recommend2; recommend3_ = recommend3; }
+
+     void setFlavour(float fpartonflavour, float fhadronflavour) {partonFlavour_ = fpartonflavour; hadronFlavour_ = fhadronflavour;}
+
+     void setQGTagger(float fQGTagger) {QGtagger_ = fQGTagger;}
+
+     //------------ Get methods ------------------------------                                                                                                                                           
+ 
+     float partonflavour()      const {return partonFlavour_;}
+     float hadronflavour()      const {return hadronFlavour_;}
+
+     float qgtagger()      const {return QGtagger_;}
+
+     float pfJetProbabilityBJetTags() const {return recommend1_;}
+     float pfCombinedInclusiveSecondaryVertexV2BJetTags() const {return recommend2_;}
+     float pfCombinedMVAV2BJetTags() const {return recommend2_;}
+
 
      //------------ Get methods ------------------------------
      float beta()     const {return beta_;}
@@ -54,10 +60,6 @@ class QCDPFJet : public QCDPFJetBTag {
      int hf_hm()      const {return hf_hm_;}
      int hf_phm()     const {return hf_phm_;}
      int ncand()      const {return ncand_;}
-     float CaloJetPt() const {return calojetpt_;}
-     float CaloJetEf() const {return calojetef_;}
- //    int nParticles() const {return pfParticles_.size();}
- //    const LorentzVector& getPFParticles(int i) const {return pfParticles_[i];}
 
      int mpuTrk()     const {return mpuTrk_;} // Juska
      int mlvTrk()     const {return mlvTrk_;} //
@@ -113,8 +115,14 @@ class QCDPFJet : public QCDPFJetBTag {
 
      float pujid_;
 
-     float calojetpt_;
-     float calojetef_;
+     //from B-tag
+     float QGtagger_;
+
+     float partonFlavour_;
+     float hadronFlavour_;
+     float recommend1_;
+     float recommend2_;
+     float recommend3_;
 
     };
 #endif

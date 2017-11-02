@@ -2,11 +2,7 @@
 <selection>
   <class name="QCDMET"/>
   <class name="QCDJet"/>
-  <class name="MyElectron"/>
-  <class name="MyMuon"/>
-  <class name="QCDCaloJet"/>
   <class name="QCDPFJet"/>
-  <class name="QCDPFJetBTag"/>
   <class name="QCDEventHdr"/>
   <class name="QCDEvent"/>
 </selection>

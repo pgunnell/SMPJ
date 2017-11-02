@@ -17,7 +17,6 @@ from PhysicsTools.PatAlgos.patSequences_cff import *
 #from RecoJets.JetProducers.pileupjetidproducer_cfi import *
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 from PhysicsTools.PatAlgos.tools.jetTools import *
-from RecoJets.JetProducers.QGTagger_cfi import QGTagger
 
 ## Modified version of jetToolBox from https://github.com/cms-jet/jetToolbox
 ## Options for PUMethod: Puppi, CS, SK, CHS
@@ -40,13 +39,10 @@ process.load('RecoJets.JetProducers.PileupJetIDParams_cfi')
 process.load("PhysicsTools.PatAlgos.patSequences_cff")
 
 #process.load("PhysicsTools.PatAlgos.slimming.pileupJetId_cfi")
-from Configuration.AlCa.GlobalTag import GlobalTag
-#process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:mc', '')
-process.GlobalTag.globaltag = "80X_mcRun2_asymptotic_2016_miniAODv2_v1"
 
-process.load('RecoJets.JetProducers.QGTagger_cfi')
-process.QGTagger.srcJets = cms.InputTag('ak4PFJetsCHS')    # Could be reco::PFJetCollection or pat::JetCollection (both AOD and miniAOD)
-process.QGTagger.jetsLabel  = cms.string('QGL_AK4PFchs')        # Other options: see https://twiki.cern.ch/twiki/bin/viewauth/CMS/QGDataBaseVersion
+#process.GlobalTag.globaltag = "74X_dataRun2_Prompt_v4"
+#process.GlobalTag.globaltag = "76X_dataRun2_v5"
+process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v9'
 
 ##-------------------- Import the JEC services -----------------------
 process.load('JetMETCorrections.Configuration.DefaultJEC_cff')
@@ -56,11 +52,16 @@ process.load('JetMETCorrections.Configuration.DefaultJEC_cff')
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 inFiles = cms.untracked.vstring(
-'file:009A0396-C0F1-E511-BE94-0025904C67A6.root'
-#'file:0274FD94-43A4-E511-BCDF-02163E01439A.root'
+#'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v4/000/258/159/00000/00F952BC-D16B-E511-B784-02163E0144F2.root'
+#'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/630/00000/BC44672C-345F-E511-BEA5-02163E0141FB.root'
+#'root://xrootd.unl.edu//store/data/Run2015C/JetHT/AOD/PromptReco-v1/000/253/890/00000/24D029CE-2741-E511-B0AF-02163E014604.root'
+#'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/674/00000/36D872F3-F95E-E511-870B-02163E013539.root'
+#'root://xrootd.unl.edu//store/data/Run2015D/JetHT/AOD/PromptReco-v3/000/256/729/00000/5C1F5529-F65F-E511-9B8C-02163E0145D9.root'
+#'file:2EE7CEE1-483B-E611-B695-02163E014655.root'
+'file:0CF529E9-0445-E611-8317-02163E011F22.root'
    )
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10000))
 process.source = cms.Source("PoolSource", fileNames = inFiles )
 
 def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = None):
@@ -69,8 +70,10 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 	JETCorrLevels = [ 'None' ]
 	bTagDiscriminators = ['trackCountingHighEffBJetTags','trackCountingHighPurBJetTags','pfTrackCountingHighEffBJetTags','pfTrackCountingHighPurBJetTags','softPFMuonByIP3dBJetTags','softPFElectronByIP3dBJetTags','softPFMuonBJetTags','softPFElectronBJetTags','simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags','pfSimpleSecondaryVertexHighEffBJetTags','pfSimpleSecondaryVertexHighPurBJetTags','combinedSecondaryVertexV2BJetTags','pfCombinedSecondaryVertexV2BJetTags','pfCombinedInclusiveSecondaryVertexV2BJetTags','pfCombinedMVAV2BJetTags','pfPositiveCombinedSecondaryVertexV2BJetTags','pfNegativeCombinedSecondaryVertexV2BJetTags','pfCombinedInclusiveSecondaryVertexV2BJetTags','pfCombinedMVAV2BJetTags','pfJetProbabilityBJetTags']
 
-	GetJetMCFlavour = ['True']
-        #JECLevels = [ 'L1Offset', 'L1FastJet', 'L1JPTOffset', 'L2Relative', 'L3Absolute', 'L5Falvour', 'L7Parton' ]
+
+
+	#GetJetMCFlavour = ['True']
+    #JECLevels = [ 'L1Offset', 'L1FastJet', 'L1JPTOffset', 'L2Relative', 'L3Absolute', 'L5Falvour', 'L7Parton' ]
 
 	algorithm='AntiKt' # CambridgeAachen' , 'Kt'
 	size = jetType[-1:] #[-1:] takes the last char from string 'akX'
@@ -82,7 +85,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 	print 'Running processes with: '+str(jetALGO)+' PF '+PUMethod+' jet algorithm with radius parameter '+str(jetSize)
 
 	JETCorrPayload = 'AK'+size+'PF'+PUMethod.lower()
-	JETCorrLevels = ['L1FastJet', 'L2Relative', 'L3Absolute']
+	JETCorrLevels = ['L1FastJet', 'L2Relative', 'L3Absolute','L2L3Residual']
 	#JETCorrLevels = [] #No JEC corrections
 	JEC = ( JETCorrPayload, JETCorrLevels , 'None')
 
@@ -98,7 +101,7 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 	toolsUsed = []
 
 	proc.load('RecoJets.Configuration.GenJetParticles_cff')
-	setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) ) 
+	setattr( proc, jetalgo+'GenJetsNoNu', ak4GenJets.clone( src = 'genParticlesForJetsNoNu', rParam = jetSize, jetAlgorithm = algorithm ) )
 	jetSeq += getattr(proc, jetalgo+'GenJetsNoNu' )
 
 	proc.load('CommonTools.ParticleFlow.pfNoPileUpJME_cff')
@@ -167,24 +170,9 @@ def jetToolbox( proc, jetType, jetSequence,PUMethod='', bTagDiscriminators = Non
 	#getattr( proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userFloats.src += [jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:fullDiscriminant']
 	#getattr( proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userInts.src += [jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:cutbasedId',jetALGO+'PF'+PUMethod+'pileupJetIdEvaluator:fullId']
 
-	QGjetsLabel='chs'
-
-	setattr( proc, 'QGTagger'+jetALGO+'PF'+PUMethod, 
-		 QGTagger.clone(
-			srcJets = cms.InputTag(jetalgo+'PFJets'+PUMethod),    # Could be reco::PFJetCollection or pat::JetCollection (both AOD and miniAOD)
-			jetsLabel = cms.string('QGL_AK4PF'+QGjetsLabel)        # Other options (might need to add an ESSource for it): see https://twiki.cern.ch/twiki/bi
-			)
-		 )
-	elemToKeep += [ 'keep *_QGTagger'+jetALGO+'PF'+PUMethod+'_*_*' ]
-	getattr( proc, 'patJets'+jetALGO+'PF'+PUMethod).userData.userFloats.src += ['QGTagger'+jetALGO+'PF'+PUMethod+':qgLikelihood']  
-	jetSeq += getattr(proc, 'QGTagger'+jetALGO+'PF'+PUMethod )
-
-	toolsUsed.append( 'QGTagger'+jetALGO+'PF'+PUMethod )
-
 	getattr(proc,'patJetPartons').particles = cms.InputTag( 'genParticles' ) #'prunedGenParticles')
 	setattr(proc, 'selectedPatJets'+jetALGO+'PF'+PUMethod, selectedPatJets.clone( src = 'patJets'+jetALGO+'PF'+PUMethod ) )
 	setattr(proc, jetSequence, jetSeq)
-
 
 jetToolbox( process, 'ak4', 'ak4JetSubs')
 jetToolbox( process, 'ak4', 'ak4JetSubs','CHS')
@@ -195,7 +183,7 @@ jetToolbox( process, 'ak4', 'ak4JetSubs','CHS')
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.load('CommonTools.UtilAlgos.TFileService_cfi')
-process.TFileService.fileName=cms.string('MC_ProcessedTreeProducer_2.root')
+process.TFileService.fileName=cms.string('DATA_ProcessedTreeProducer_2.root')
 
 # PAT Layer 1
 #process.load("PhysicsTools.PatAlgos.patLayer0_cff") # need to load this
@@ -208,21 +196,7 @@ process.load("PhysicsTools.PatAlgos.selectionLayer1.selectedPatCandidates_cff")
 #patMETs.addGenMet = cms.bool(False)
 #patMETs.genMETSource = cms.InputTag("")
 process.patJets.addTagInfos = True
-process.patJets.getJetMCFlavour = True
-
-genJetCollection = 'ak4GenJetsNoNu'
-genParticleCollection = 'genParticles'
-
-from PhysicsTools.JetMCAlgos.HadronAndPartonSelector_cfi import selectedHadronsAndPartons
-process.selectedHadronsAndPartons = selectedHadronsAndPartons.clone(
-    particles = genParticleCollection
-)
-
-from PhysicsTools.JetMCAlgos.AK4PFJetsMCFlavourInfos_cfi import ak4JetFlavourInfos
-
-process.genJetFlavourInfos = ak4JetFlavourInfos.clone(
-    jets = genJetCollection,
-)
+process.patJets.addAssociatedTracks = True
 
 process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducerBTag',
 	## jet collections ###########################
@@ -239,36 +213,36 @@ process.ak4 =  cms.EDAnalyzer('ProcessedTreeProducerBTag',
 	jecUncSrc       = cms.string(''),
 	jecUncSrcCHS    = cms.string(''),
         jecUncSrcNames  = cms.vstring(''),
-        AK4             = cms.untracked.bool(True), 			      
 	## set the conditions for good Vtx counting ##
 	offlineVertices = cms.InputTag('offlinePrimaryVertices'),
+        beamSpot        = cms.InputTag('offlineBeamSpot'),
 	goodVtxNdof     = cms.double(4),
 	goodVtxZ        = cms.double(24),
 	## rho #######################################
 	srcCaloRho      = cms.InputTag('fixedGridRhoFastjetAllCalo'),
 	srcPFRho        = cms.InputTag('fixedGridRhoFastjetAll'),
-        srcPULabel      = cms.untracked.InputTag('addPileupInfo'),			      
+	srcPULabel      = cms.untracked.InputTag('addPileupInfo','addPileupInfo'),
 	## preselection cuts #########################
 	maxY            = cms.double(5.0),
 	minPFPt         = cms.double(20),
 	minNPFJets      = cms.int32(1),
 	minGenPt        = cms.untracked.double(20),
 	minJJMass       = cms.double(-1),
-        isMCarlo        = cms.untracked.bool(True),
-        useGenInfo      = cms.untracked.bool(True),
+        isMCarlo        = cms.untracked.bool(False),
+        useGenInfo      = cms.untracked.bool(False),
 	## trigger ###################################
-	printTriggerMenu = cms.untracked.bool(False),
+	printTriggerMenu = cms.untracked.bool(True),
 	processName     = cms.string('HLT'),
-	triggerName     = cms.vstring(''),
+	triggerName     = cms.vstring('HLT_PFJet40_v6'),
 	triggerResults  = cms.InputTag("TriggerResults","","HLT"),
 	triggerEvent    = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
 	## jec services ##############################
-	HBHENoiseFilterResultLabel = cms.InputTag("HBHENoiseFilterResultProducer", "HBHENoiseFilterResult"),
-	HBHENoiseFilterResultNoMinZLabel = cms.InputTag("HBHENoiseFilterResultProducerNoMinZ", "HBHENoiseFilterResult"),		      
+	#new tokens
         EventInfo       = cms.InputTag("generator"),
-	GenParticles    = cms.InputTag("genParticles"),	
-	beamSpot        = cms.InputTag('offlineBeamSpot'),		      
-	jetFlavourInfos = cms.InputTag("genJetFlavourInfos"),
+        GenParticles    = cms.InputTag("genparticles"),
+        HBHENoiseFilterResultLabel = cms.InputTag("HBHENoiseFilterResultProducer", "HBHENoiseFilterResult"),
+        HBHENoiseFilterResultNoMinZLabel = cms.InputTag("HBHENoiseFilterResultProducerNoMinZ", "HBHENoiseFilterResult"),
+			      jetFlavourInfos = cms.InputTag("genJetFlavourInfos"),
 	#pfjecService    = cms.string('ak7PFL1FastL2L3Residual'),
 )
 
@@ -282,7 +256,6 @@ process.ak8 = process.ak4.clone(
 	pfchsjetpuid    = cms.string('AK8PFCHSpileupJetIdEvaluator:fullDiscriminant'),
         PFPayloadName   = cms.string('AK8PF'),
         PFPayloadNameCHS= cms.string('AK8PFchs'),
-        AK4             = cms.untracked.bool(False), 			      
 )
 
 jetToolbox( process, 'ak7', 'ak7JetSubs','CHS')
@@ -295,7 +268,6 @@ process.ak7 = process.ak4.clone(
 	pfchsjetpuid    = cms.string('AK7PFCHSpileupJetIdEvaluator:fullDiscriminant'),
         PFPayloadName   = cms.string('AK7PF'),
         PFPayloadNameCHS= cms.string('AK7PFchs'),
-	AK4             = cms.untracked.bool(False), 			      
 )
 
 jetToolbox( process, 'ak5', 'ak5JetSubs','CHS')
@@ -308,8 +280,23 @@ process.ak5 = process.ak4.clone(
 	pfchsjetpuid    = cms.string('AK5PFCHSpileupJetIdEvaluator:fullDiscriminant'),
         PFPayloadName   = cms.string('AK5PF'),
         PFPayloadNameCHS= cms.string('AK5PFchs'),
-	AK4             = cms.untracked.bool(False), 			      
 )
+
+############# hlt filter #########################
+process.hltFilter = cms.EDFilter('HLTHighLevel',
+    TriggerResultsTag  = cms.InputTag('TriggerResults','','HLT'),
+    HLTPaths           = cms.vstring('HLT_PFJet40_v6'),
+    eventSetupPathsKey = cms.string(''),
+    andOr              = cms.bool(True), #----- True = OR, False = AND between the HLTPaths
+    throw              = cms.bool(False)
+)
+
+##MET Filters
+process.load('RecoMET.METFilters.CSCTightHaloFilter_cfi')
+process.load('CommonTools.RecoAlgos.HBHENoiseFilterResultProducer_cfi')
+
+process.HBHENoiseFilterResultProducerNoMinZ = process.HBHENoiseFilterResultProducer.clone(minZeros = cms.int32(99999))
+
 
 process.goodVertices = cms.EDFilter("VertexSelector",
    filter = cms.bool(False),
@@ -323,7 +310,14 @@ process.load('PhysicsTools.PatAlgos.recoLayer0.metCorrections_cff')
 process.load('PhysicsTools.PatAlgos.producersLayer1.metProducer_cfi')
 process.patMETs.addGenMET = cms.bool(False)
 #Try scheduled processs
-process.path = cms.Path(process.ak4*process.ak7)
+process.path = cms.Path(process.goodVertices*process.trackingFailureFilter*
+			process.hltFilter*
+			process.HBHENoiseFilterResultProducer*
+		        process.HBHENoiseFilterResultProducerNoMinZ*
+			process.patMETCorrections*process.patMETs#process.patDefaultSequence*
+			#*process.ak4 *process.ak5*process.ak7*process.ak8)
+			*process.ak4)
+
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #! Output and Log

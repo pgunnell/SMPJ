@@ -46,9 +46,7 @@ class QCDJet
      float area()                 const {return area_;} 
      bool  looseID()              const {return looseID_;}
      bool  tightID()              const {return tightID_;}
-  //   int  nParticles()            const {return pfParticles_.size();}
-  //   const LorentzVector& getPFParticles(int i) const {return pfParticles_[i];}
-   private:
+ private:
      //------ jet 4-momentum vector------------------
      LorentzVector P4_;
      //------ matched genjet 4-momentum vector-------
@@ -69,7 +67,6 @@ class QCDJet
      bool  looseID_;
      //------ tight ID flag -------------------------
      bool  tightID_;
-     //------ LorentzVector For PF PARTICLES
-  //   std::vector<LorentzVector> pfParticles_;
+    
  };
 #endif

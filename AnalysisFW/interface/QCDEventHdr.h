@@ -2,6 +2,9 @@
 //Modified by: S. Ganguly
 #ifndef QCDEventHdr_h
 #define QCDEventHdr_h
+#include <vector>
+
+using namespace std;
 
 class QCDEventHdr 
 {
@@ -17,12 +20,12 @@ class QCDEventHdr
       void setBunch(int fBunch)                              {mBunch = fBunch;}
       void setPthat(float fPthat)                            {mPthat = fPthat;}
       void setWeight(float fWeight)                          {mWeight = fWeight;} 
+      void setScaleWeight(const std::vector<double> fWeightScale)       {mScaleWeight = fWeightScale;} 
+      void setPDFWeight(const std::vector<double> fWeightPDF)       {mPDFWeight = fWeightPDF;} 
       void setRho(float fCaloRho, float fPFRho)              {mCaloRho = fCaloRho; mPFRho = fPFRho;}
       void setVertices(int fNVtx, int fNVtxGood)             {mNVtx = fNVtx; mNVtxGood = fNVtxGood;}
       void setPV(bool fIsPVgood, float fndof, float fx, float fy, float fz) {mIsPVgood = fIsPVgood; mPVndof = fndof; mPVx = fx; mPVy = fy; mPVz = fz;}
       void setBS(float fBSx, float fBSy, float fBSz) {mBSx = fBSx; mBSy = fBSy; mBSz = fBSz;}
-      void setHCALNoise(bool fNoise) {mHCALNoise = fNoise;}
-      void setHCALNoiseNoMinZ(bool fNoise) {mHCALNoiseNoMinZ = fNoise;}
       void setPU(int fNBX, int fOOTPUEarly, int fOOTPULate, int fINTPU) {mNBX = fNBX; mOOTPUEarly = fOOTPUEarly; mOOTPULate = fOOTPULate; mINTPU = fINTPU;}
       void setTrPu(float fTrPu) {mTrPu = fTrPu;} // setting the true PU 
       //------------ Get methods ------------------------------
@@ -39,8 +42,6 @@ class QCDEventHdr
       int pu()              const {return mOOTPUEarly+mOOTPULate+mINTPU;}
       float trpu()          const {return mTrPu;} // get method for True number of interaction
       bool isPVgood()       const {return mIsPVgood;}
-      bool hcalNoise()      const {return mHCALNoise;}
-      bool hcalNoiseNoMinZ()      const {return mHCALNoiseNoMinZ;}
       float PVndof()        const {return mPVndof;} 
       float PVx()           const {return mPVx;}
       float PVy()           const {return mPVy;}
@@ -50,6 +51,8 @@ class QCDEventHdr
       float BSz()           const {return mBSz;}
       float pthat()         const {return mPthat;}
       float weight()        const {return mWeight;}
+      float weightPDF(int i)        const {return mScaleWeight[i];}
+      float weightScale(int i)        const {return mPDFWeight[i];}
       float caloRho()       const {return mCaloRho;} 
       float pfRho()         const {return mPFRho;} 
       private:
@@ -95,6 +98,8 @@ class QCDEventHdr
         float mPthat;
         //---- simulation weight ----------------------
         float mWeight;
+	std::vector<double> mScaleWeight;
+	std::vector<double> mPDFWeight;
         //---- median CALO pt density -----------------
         float mCaloRho;
         //---- median PF pt density -------------------
