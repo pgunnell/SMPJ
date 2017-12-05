@@ -111,6 +111,7 @@ ProcessedTreeProducerBTag::ProcessedTreeProducerBTag(edm::ParameterSet const& cf
   //triggerEventTag_   = cfg.getParameter<edm::InputTag>             ("triggerEvent");
   //New additions
   //beamSpot_(consumes<reco::BeamSpot>(cfg.getParameter<std::string>("offlineBeamSpot")));
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void ProcessedTreeProducerBTag::beginJob()
@@ -844,6 +845,39 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
      double pfCombinedCvsL = i_pfjetchs->bDiscriminator("pfCombinedCvsLJetTags");
      double pfCombinedCvsB = i_pfjetchs->bDiscriminator("pfCombinedCvsBJetTags");
 
+     // 'negativeDeepFlavourJetTags:probbb',
+     // 'deepFlavourJetTags:probudsg',
+     // 'negativeDeepFlavourJetTags:probcc',
+     // 'positiveDeepFlavourJetTags:probbb', 'deepFlavourJetTags:probcc',
+     // 'positiveDeepFlavourJetTags:probc',
+     // 'negativeDeepFlavourJetTags:probc', 'negativeDeepFlavourJetTags:probb',
+     // 'pfNegativeCombinedCvsBJetTags', 
+     // 'negativeOnlyJetBProbabilityBJetTags',
+     // 'pfTrackCountingHighEffBJetTags', 
+     // 'negativeDeepFlavourJetTags:probudsg',
+     // 'softPFMuonByIP2dBJetTags',
+     // 'deepFlavourJetTags:probbb',
+     // 'positiveDeepFlavourJetTags:probb',
+     // 'deepFlavourJetTags:probb',
+     // 'deepFlavourJetTags:probc', 'positiveDeepFlavourJetTags:probudsg',
+     // 'positiveDeepFlavourJetTags:probcc'
+
+     float DeepCSVb   = i_pfjetchs->bDiscriminator("deepFlavourJetTags:probb");
+     float DeepCSVc   = i_pfjetchs->bDiscriminator("deepFlavourJetTags:probc");
+     float DeepCSVl   = i_pfjetchs->bDiscriminator("deepFlavourJetTags:probudsg");
+     float DeepCSVbb  = i_pfjetchs->bDiscriminator("deepFlavourJetTags:probbb");
+     float DeepCSVcc  = i_pfjetchs->bDiscriminator("deepFlavourJetTags:probcc");
+     float DeepCSVbN  = i_pfjetchs->bDiscriminator("negativeDeepFlavourJetTags:probb");
+     float DeepCSVcN  = i_pfjetchs->bDiscriminator("negativeDeepFlavourJetTags:probc");
+     float DeepCSVlN  = i_pfjetchs->bDiscriminator("negativeDeepFlavourJetTags:probudsg");
+     float DeepCSVbbN = i_pfjetchs->bDiscriminator("negativeDeepFlavourJetTags:probbb");
+     float DeepCSVccN = i_pfjetchs->bDiscriminator("negativeDeepFlavourJetTags:probcc");
+     float DeepCSVbP  = i_pfjetchs->bDiscriminator("positiveDeepFlavourJetTags:probb");
+     float DeepCSVcP  = i_pfjetchs->bDiscriminator("positiveDeepFlavourJetTags:probc");
+     float DeepCSVlP  = i_pfjetchs->bDiscriminator("positiveDeepFlavourJetTags:probudsg");
+     float DeepCSVbbP = i_pfjetchs->bDiscriminator("positiveDeepFlavourJetTags:probbb");
+     float DeepCSVccP = i_pfjetchs->bDiscriminator("positiveDeepFlavourJetTags:probcc");
+
 
 	 //the three recommended                                                                                                                                        
 	 
@@ -876,6 +910,10 @@ void ProcessedTreeProducerBTag::analyze(edm::Event const& event, edm::EventSetup
 	 //qcdpfjetchs.setCombinedSecondaryVertexTag(CSV,CSVpf,CinclSVpf,CSVSoftLeptonpf,CMVApf);
 	 qcdpfjetchs.setPositiveNegativeCSV(CSVpfPositive,CSVpfNegative);
 	 qcdpfjetchs.setTagRecommended(pfJetProbabilityBJetTags,pfCombinedInclusiveSecondaryVertexV2BJetTags,pfCombinedMVAV2BJetTags);
+     qcdpfjetchs.setDeepCSV(DeepCSVb, DeepCSVc, DeepCSVl, DeepCSVbb, DeepCSVcc,
+             DeepCSVbN, DeepCSVcN, DeepCSVlN, DeepCSVbbN, DeepCSVccN,
+             DeepCSVbP, DeepCSVcP, DeepCSVlP, DeepCSVbbP, DeepCSVccP);
+
 	 qcdpfjetchs.setQGTagger(QGTagger);	 
      qcdpfjetchs.setBoosted(pfBoostedDoubleSecondaryVertex);
      qcdpfjetchs.setCTagger(pfCombinedCvsL,pfCombinedCvsB);

@@ -22,6 +22,28 @@ class QCDPFJetBTag : public QCDJet {
 
      void setTagRecommended(float recommend1, float recommend2, float recommend3) { recommend1_ = recommend1; recommend2_ = recommend2; recommend3_ = recommend3; } 
 
+     void setDeepCSV (float DeepCSVb, float
+             DeepCSVc, float DeepCSVl, float DeepCSVbb , float DeepCSVcc , float DeepCSVbN ,
+             float DeepCSVcN , float DeepCSVlN , float DeepCSVbbN, float DeepCSVccN, float
+             DeepCSVbP , float DeepCSVcP , float DeepCSVlP , float DeepCSVbbP, float
+             DeepCSVccP) {
+         DeepCSVb_ = DeepCSVb;
+         DeepCSVc_ = DeepCSVc;
+         DeepCSVl_ = DeepCSVl;
+         DeepCSVbb_ = DeepCSVbb;
+         DeepCSVcc_ = DeepCSVcc;
+         DeepCSVbN_ = DeepCSVbN;
+         DeepCSVcN_ = DeepCSVcN;
+         DeepCSVlN_ = DeepCSVlN;
+         DeepCSVbbN_ = DeepCSVbbN;
+         DeepCSVccN_ = DeepCSVccN;
+         DeepCSVbP_ = DeepCSVbP;
+         DeepCSVcP_ = DeepCSVcP;
+         DeepCSVlP_ = DeepCSVlP;
+         DeepCSVbbP_ = DeepCSVbbP;
+         DeepCSVccP_ = DeepCSVccP;}
+
+
      void setFlavour(float fpartonflavour, float fhadronflavour) {partonFlavour_ = fpartonflavour; hadronFlavour_ = fhadronflavour;}
 
      void setQGTagger(float fQGTagger) {QGtagger_ = fQGTagger;}
@@ -100,6 +122,11 @@ class QCDPFJetBTag : public QCDJet {
      // ctaggers
      float pfCombinedCvsL_;
      float pfCombinedCvsB_;
+     float DeepCSVb_, DeepCSVc_, DeepCSVl_, DeepCSVbb_, DeepCSVcc_, DeepCSVbN_,
+           DeepCSVcN_, DeepCSVlN_, DeepCSVbbN_, DeepCSVccN_,  DeepCSVbP_, DeepCSVcP_,
+           DeepCSVlP_, DeepCSVbbP_, DeepCSVccP_;
+
+     
 
     };
 #endif
