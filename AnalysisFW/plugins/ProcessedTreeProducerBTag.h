@@ -132,7 +132,6 @@ class ProcessedTreeProducerBTag : public edm::EDAnalyzer
     int getMatchedHadronGen(edm::Event const& event, GenJetCollection::const_iterator i_gen);
 
     HLTPrescaleProvider hltPrescale_;
-
 };
 
 #endif
